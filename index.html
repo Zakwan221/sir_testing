@@ -623,13 +623,13 @@ notifications:[
   {id:'n5',title:'Your missing report was confirmed',sub:'MR-2606-001 confirmed by manager — inventory deducted',time:'2026-06-10T09:30:00',read:false,targetRole:'Staff',link:'missing'},
 ],
 /* Stock alert settings — manager-configurable rule for what counts as "low stock" */
-settings:{lowStockThreshold:10},
+settings:{lowStockThreshold:10,categories:['Business','Computer Science','Economics','Engineering','History','Literature','Mathematics','Science']},
 };
 
-const CATS=['Business','Computer Science','Economics','Engineering','History','Literature','Mathematics','Science'];
+/* Categories are stored in DB.settings.categories so they persist in-session */
 /* Sales tax rate (%) — fixed by system, cannot be changed via the UI */
 const TAX_RATE_FIXED=6;
-function getCats(){return[...new Set(DB.books.map(b=>b.category))].sort();}
+function getCats(){return[...new Set([...DB.settings.categories,...DB.books.map(b=>b.category)])].sort();}
 function lowThresh(){return DB.settings.lowStockThreshold;}
 function sSt(b){if(b.qty===0)return{label:'Out of Stock',cls:'br2'};if(b.qty<lowThresh())return{label:'Low Stock',cls:'by'};return{label:'In Stock',cls:'bg2'};}
 function rmF(v){return'RM '+parseFloat(v).toFixed(2);}
@@ -643,7 +643,7 @@ function getPendMR(){return DB.missingReports.filter(r=>r.status==='pending');}
 function getPendCustReturns(){return DB.customerReturns.filter(r=>r.status==='pending');}
 function getDefectiveItems(){return DB.defectiveItems||(DB.defectiveItems=[]);}
 function getPendDefective(){return getDefectiveItems().filter(r=>r.status==='pending');}
-function cOpts(s=''){return CATS.map(c=>`<option value="${c}"${s===c?' selected':''}>${c}</option>`).join('');}
+function cOpts(s=''){return getCats().map(c=>`<option value="${c}"${s===c?' selected':''}>${c}</option>`).join('');}
 function isel(id){return document.getElementById(id);}
 function setHTML(h){isel('pc').innerHTML=h;if(window.lucide&&lucide.createIcons)try{if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){};}catch(e){}}
 function bookByRFID(rfid){return DB.books.find(b=>b.rfid===rfid);}
@@ -884,8 +884,10 @@ function pgBooks(s='',cf=''){
       <button class="bic dl" onclick="delBook('${b.id}')" style="margin-left:3px"><i data-lucide="trash-2"></i></button>`
       :'<span style="font-size:.7rem;color:var(--tl)">View</span>'}</td></tr>`;}).join('')
     :`<tr><td colspan="12"><div class="empty"><div class="eico"><i data-lucide="search-x"></i></div><h3>No books found</h3></div></td></tr>`;
+  var catBtn=ce?'<button class="btn bno" onclick="openManageCats()"><i data-lucide="tag"></i>Manage Categories</button>':'';
+  var addBookBtn=ce?'<button class="btn bnn" onclick="editBook(null)"><i data-lucide="plus"></i>Add Book</button>':'';
   setHTML(`<div class="ph"><div><h2>Book Catalogue</h2><p>${DB.books.length} titles — each with unique SKU, RFID tag &amp; Barcode</p></div>
-    <div class="pha">${ce?`<button class="btn bnn" onclick="editBook(null)"><i data-lucide="plus"></i>Add Book</button>`:''}</div></div>
+    <div class="pha">${catBtn}${addBookBtn}</div></div>
     <div class="card"><div class="ch"><div class="tb2">
       <div class="sbox"><i data-lucide="search"></i><input type="text" placeholder="Search title, author, SKU, RFID…" value="${s}" oninput="pgBooks(this.value,isel('bkf').value)"/></div>
       <select class="flt" id="bkf" onchange="pgBooks(isel('pc').querySelector('.sbox input').value,this.value)"><option value="">All Categories</option>${co}</select>
@@ -932,6 +934,58 @@ function delBook(id){
   const b=DB.books.find(x=>x.id===id);
   openCo('Delete Book',`Delete "${b.title}"?`,()=>{DB.books=DB.books.filter(x=>x.id!==id);toast('Book removed.');pgBooks();});
 }
+function openManageCats(){
+  function renderCatList(){
+    var cats=getCats();
+    var usedCats={};
+    DB.books.forEach(function(b){usedCats[b.category]=(usedCats[b.category]||0)+1;});
+    return cats.map(function(c){
+      var cnt=usedCats[c]||0;
+      var inSettings=DB.settings.categories.indexOf(c)>=0;
+      var delBtn=(!cnt&&inSettings)?'<button class="bic dl" onclick="delCat(this)" data-cat="'+c+'" title="Remove category"><i data-lucide="trash-2"></i></button>':'<span style="font-size:.67rem;color:var(--tl)">In use</span>';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--bd);border-radius:var(--r);background:var(--wh);margin-bottom:6px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span class="badge bgr">'+c+'</span>'
+        +(cnt?'<span style="font-size:.68rem;color:var(--tl)">'+cnt+' book(s)</span>':'<span style="font-size:.68rem;color:var(--tl)">No books yet</span>')
+        +'</div>'
+        +delBtn
+        +'</div>';
+    }).join('');
+  }
+  window.delCat=function(btn){
+    var c=btn.dataset.cat;
+    if(DB.books.some(function(b){return b.category===c;})){toast('Cannot remove — category has books.','error');return;}
+    DB.settings.categories=DB.settings.categories.filter(function(x){return x!==c;});
+    toast('Category "'+c+'" removed.','info');
+    var listEl=document.getElementById('cat-list');
+    if(listEl){listEl.innerHTML=renderCatList();if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}}
+  };
+  window.addCatFromModal=function(){
+    var inp=document.getElementById('new-cat-inp');
+    if(!inp)return;
+    var val=inp.value.trim();
+    if(!val){toast('Enter a category name.','error');return;}
+    var norm=val.charAt(0).toUpperCase()+val.slice(1);
+    var existing=getCats().map(function(c){return c.toLowerCase();});
+    if(existing.indexOf(norm.toLowerCase())>=0){toast('Category already exists.','error');return;}
+    DB.settings.categories.push(norm);
+    DB.settings.categories.sort();
+    inp.value='';
+    toast('Category "'+norm+'" added.','success');
+    var listEl=document.getElementById('cat-list');
+    if(listEl){listEl.innerHTML=renderCatList();if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}}
+    pgBooks();
+  };
+  var body='<div class="finfo"><i data-lucide="info"></i>Categories used by books cannot be deleted. Add new ones below \u2014 they appear instantly in all dropdowns.</div>'
+    +'<div style="display:flex;gap:7px;margin-bottom:14px">'
+    +'<input id="new-cat-inp" placeholder="New category name\u2026" style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)" onkeydown="if(event.key===\'Enter\')addCatFromModal()"/>'
+    +'<button class="btn bna" onclick="addCatFromModal()"><i data-lucide="plus"></i>Add</button>'
+    +'</div>'
+    +'<div id="cat-list">'+renderCatList()+'</div>';
+  openMo('Manage Categories',body,'<button class="btn bno" onclick="closeMo()">Close</button>');
+  if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}
+}
+
 /* ===== MISSING STOCK PAGE (Manager + Staff) ===== */
 /* Shows: RFID Gate panel, Low stock cards, Missing Reports table */
 let rfidTimer=null;
@@ -1511,24 +1565,41 @@ function genEmployeeId(role){
   const next=(nums.length?Math.max(...nums):0)+1;
   return 'EMP-'+prefix+'-'+String(next).padStart(3,'0');
 }
-function pgUsers(s=''){
-  const list=DB.users.filter(u=>u.role!=='Admin'&&u.role!=='Supplier'&&(!s||u.name.toLowerCase().includes(s.toLowerCase())||u.username.includes(s)||(u.employeeId&&u.employeeId.toLowerCase().includes(s.toLowerCase()))));
-  const rows=list.length?list.map(u=>`<tr>
-    <td><span class="sku" style="font-size:.75rem;letter-spacing:.6px">${u.employeeId||'—'}</span></td>
-    <td style="font-weight:600">${u.name}</td>
-    <td style="font-family:monospace;font-size:.79rem">${u.username}</td>
-    <td><span class="badge ${u.role==='Manager'?'bb':'bg2'}">${u.role}</span></td>
-    <td style="font-size:.79rem">${u.email||'—'}</td>
-    <td><button class="bic ed" onclick="editUserA('${u.id}')"><i data-lucide="pencil"></i></button>
-      <button class="bic dl" onclick="delUser('${u.id}','admin')" style="margin-left:3px"><i data-lucide="trash-2"></i></button></td>
-  </tr>`).join(''):`<tr><td colspan="6"><div class="empty"><div class="eico"><i data-lucide="shield"></i></div><h3>No users</h3></div></td></tr>`;
-  setHTML(`<div class="ph"><div><h2>User Management</h2><p>Manage staff and manager accounts — each assigned a unique Employee ID</p></div>
-    <button class="btn bnn" onclick="editUserA(null)"><i data-lucide="plus"></i>Add User</button></div>
-    <div class="card"><div class="ch"><div class="sbox" style="max-width:320px"><i data-lucide="search"></i>
-      <input type="text" placeholder="Search name, username or Employee ID…" value="${s}" oninput="pgUsers(this.value)"/></div></div>
-    <div class="tw"><table><thead><tr><th>Employee ID</th><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Action</th></tr></thead>
-    <tbody>${rows}</tbody></table></div></div>`);
+function pgUsers(s,rf){
+  if(s===undefined)s='';
+  if(rf===undefined)rf='all';
+  var allUsers=DB.users.filter(function(u){return u.role!=='Supplier';});
+  var roleCounts={all:allUsers.length,Admin:0,Manager:0,Staff:0};
+  allUsers.forEach(function(u){if(roleCounts[u.role]!==undefined)roleCounts[u.role]++;});
+  var list=allUsers.filter(function(u){
+    var roleOk=rf==='all'||u.role===rf;
+    var q=s.toLowerCase();
+    var searchOk=!q||u.name.toLowerCase().indexOf(q)>=0||u.username.indexOf(q)>=0||(u.employeeId&&u.employeeId.toLowerCase().indexOf(q)>=0);
+    return roleOk&&searchOk;
+  });
+  var roleBadge={Admin:'bp',Manager:'bb',Staff:'bg2'};
+  var tabRoles=['all','Admin','Manager','Staff'];
+  var tabs=tabRoles.map(function(r){
+    var active=rf===r;
+    var label=r==='all'?'All':r;
+    var cls=active?'bnn':'bno';
+    return '<button class="btn bsm '+cls+'" onclick="pgUsers(document.getElementById(\'usr-search\').value,\''+r+'\')">'+label+' <span class="badge bgr" style="margin-left:3px">'+roleCounts[r]+'</span></button>';
+  }).join('');
+  var rows=list.length?list.map(function(u){
+    var eid=u.employeeId?'<span class="sku" style="font-size:.75rem;letter-spacing:.6px">'+u.employeeId+'</span>':'<span style="color:var(--tl)">—</span>';
+    var badge=roleBadge[u.role]||'bgr';
+    var actions=u.role==='Admin'?'<span style="font-size:.7rem;color:var(--tl)">Protected</span>':'<button class="bic ed" onclick="editUserA(\''+u.id+'\')"><i data-lucide="pencil"></i></button> <button class="bic dl" onclick="delUser(\''+u.id+'\',\'admin\')"><i data-lucide="trash-2"></i></button>';
+    return '<tr><td>'+eid+'</td><td style="font-weight:600">'+u.name+'</td><td style="font-family:monospace;font-size:.79rem">'+u.username+'</td><td><span class="badge '+badge+'">'+u.role+'</span></td><td style="font-size:.79rem">'+(u.email||'—')+'</td><td>'+actions+'</td></tr>';
+  }).join(''):'<tr><td colspan="6"><div class="empty"><div class="eico"><i data-lucide="shield"></i></div><h3>No users found</h3></div></td></tr>';
+  setHTML('<div class="ph"><div><h2>User Management</h2><p>Manage system accounts — filter by role below</p></div>'
+    +'<button class="btn bnn" onclick="editUserA(null)"><i data-lucide="plus"></i>Add User</button></div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:13px;flex-wrap:wrap">'+tabs+'</div>'
+    +'<div class="card"><div class="ch"><div class="sbox" style="max-width:320px"><i data-lucide="search"></i>'
+    +'<input id="usr-search" type="text" placeholder="Search name, username or Employee ID\u2026" value="'+s+'" oninput="pgUsers(this.value,\''+rf+'\')"/></div></div>'
+    +'<div class="tw"><table><thead><tr><th>Employee ID</th><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Action</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div></div>');
 }
+
 function editUserA(id){
   const u=id?DB.users.find(x=>x.id===id):{name:'',username:'',role:'Staff',email:'',employeeId:''};
   const autoId=id?'':(u.role==='Manager'?genEmployeeId('Manager'):genEmployeeId('Staff'));
@@ -2788,7 +2859,6 @@ function doRespondSupRet(id,decision){
   r.status=`supplier-${decision}`;
   r.supplierNote=note;
   r.supplierRespondedAt=new Date().toISOString();
-  
   if(decision==='received'){
     const cn=isel('srr-cn')?.value.trim()||'';
     const ca=parseFloat(isel('srr-ca')?.value)||0;
