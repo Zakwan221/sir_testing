@@ -130,10 +130,19 @@ i[data-lucide] svg{width:1em;height:1em;stroke-width:2}
 .bic.dl{background:var(--dlt);color:var(--dg)}.bic.dl:hover{background:#fee2e2}
 /* TOOLBAR */
 .tb2{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.sbox{position:relative;flex:1;min-width:185px}
-.sbox i{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--tl);pointer-events:none}
-.sbox input{width:100%;padding:7px 10px 7px 27px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.81rem;background:var(--wh)}
+.sbox{position:relative;flex:1;min-width:185px;display:flex;align-items:center;gap:5px}
+.sbox i{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--tl);pointer-events:none;z-index:1}
+.sbox input{flex:1;min-width:0;padding:7px 10px 7px 27px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.81rem;background:var(--wh)}
 .sbox input:focus{outline:none;border-color:var(--ac)}
+.qr-btn{flex-shrink:0;width:30px;height:30px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--wh);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tl);transition:.15s}
+.qr-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--alt)}
+#qr-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#qr-overlay.active{display:flex}
+#qr-video{width:min(340px,90vw);height:min(340px,90vw);object-fit:cover;border-radius:12px;border:3px solid var(--ac)}
+#qr-target{position:relative;width:min(340px,90vw);height:min(340px,90vw)}
+#qr-target::after{content:'';position:absolute;inset:20px;border:2.5px solid var(--ac);border-radius:8px;box-shadow:0 0 0 999px rgba(0,0,0,.4)}
+#qr-cancel{padding:9px 22px;border-radius:var(--r);border:none;background:#fff;cursor:pointer;font-size:.85rem;font-weight:600}
+#qr-label{color:#fff;font-size:.83rem;font-weight:500;letter-spacing:.2px}
 select.flt{padding:7px 9px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.79rem;background:var(--wh);color:var(--tx);cursor:pointer}
 select.flt:focus{outline:none;border-color:var(--ac)}
 /* TABLE */
@@ -316,6 +325,7 @@ tbody tr:hover{background:var(--bg)}
 .sup-ret-card.declined{border-left:4px solid var(--dg)}
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 </head>
 <body><!-- LOGIN -->
 <div id="ls">
@@ -540,9 +550,10 @@ transactions:[
   {id:'t25',ref:'TXN-2606-010',custId:'CUST-29900',custName:'Kavitha Raj',bookId:'b23',bookTitle:'Cell Biology',qty:1,unitPrice:82.00,date:'2026-06-10',staffId:'u3',staffName:'Ahmad Ismail',note:'Lab'},
 ],
 stockRequests:[
-  {id:'req1',supplierId:'sp2',supplierName:'Buku Kita Trading',type:'restock',bookId:'b02',bookTitle:'Data Structures & Algorithms',category:'Computer Science',isNewGenre:false,newGenreDetails:'',qty:15,unitPrice:55.00,note:'Currently out of stock.',status:'pending',submittedAt:'2026-06-08T09:30:00',reviewedAt:null,reviewNote:''},
-  {id:'req2',supplierId:'sp1',supplierName:'Pustaka Sdn Bhd',type:'new_book',bookId:null,bookTitle:'Machine Learning Fundamentals',category:'Computer Science',isNewGenre:false,newGenreDetails:'',qty:10,unitPrice:65.00,note:'Highly requested.',status:'pending',submittedAt:'2026-06-09T14:15:00',reviewedAt:null,reviewNote:''},
-  {id:'req3',supplierId:'sp3',supplierName:'KL Book Distributors',type:'new_genre',bookId:null,bookTitle:'Principles of Law in Malaysia',category:'Law',isNewGenre:true,newGenreDetails:'Law popular at local universities.',qty:8,unitPrice:75.00,note:'Genre not stocked.',status:'approved',submittedAt:'2026-06-07T11:00:00',reviewedAt:'2026-06-08T10:00:00',reviewNote:'Approved. Deliver within 5 days.'},
+  {id:'req1',supplierId:'sp2',supplierName:'Buku Kita Trading',type:'restock',bookId:'b02',bookTitle:'Data Structures & Algorithms',category:'Computer Science',isNewGenre:false,newGenreDetails:'',qty:15,unitPrice:55.00,note:'Currently out of stock.',status:'pending',submittedAt:'2026-06-08T09:30:00',reviewedAt:null,reviewNote:'',deliveredAt:null,deliveryNote:''},
+  {id:'req2',supplierId:'sp1',supplierName:'Pustaka Sdn Bhd',type:'new_book',bookId:null,bookTitle:'Machine Learning Fundamentals',category:'Computer Science',isNewGenre:false,newGenreDetails:'',qty:10,unitPrice:65.00,note:'Highly requested.',status:'pending',submittedAt:'2026-06-09T14:15:00',reviewedAt:null,reviewNote:'',deliveredAt:null,deliveryNote:''},
+  {id:'req0',supplierId:'sp1',supplierName:'Pustaka Sdn Bhd',type:'restock',bookId:'b31',bookTitle:'Business Management',category:'Business',isNewGenre:false,newGenreDetails:'',qty:20,unitPrice:60.00,note:'Monthly restock.',status:'delivered',submittedAt:'2026-05-20T09:00:00',reviewedAt:'2026-05-20T10:00:00',reviewNote:'Approved.',deliveredAt:'2026-05-25T14:00:00',deliveryNote:'All 20 units received in good condition.'},
+  {id:'req3',supplierId:'sp3',supplierName:'KL Book Distributors',type:'new_genre',bookId:null,bookTitle:'Principles of Law in Malaysia',category:'Law',isNewGenre:true,newGenreDetails:'Law popular at local universities.',qty:8,unitPrice:75.00,note:'Genre not stocked.',status:'approved',submittedAt:'2026-06-07T11:00:00',reviewedAt:'2026-06-08T10:00:00',reviewNote:'Approved. Deliver within 5 days.',deliveredAt:null,deliveryNote:''},
 ],
 /* RFID gate events — simulated unauthorized exit detections */
 rfidEvents:[
@@ -638,7 +649,7 @@ function fmtDT(d){return new Date(d).toLocaleString('en-MY',{day:'2-digit',month
 function fmtTime(d){return new Date(d).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 function getLow(){return DB.books.filter(b=>b.qty<lowThresh());}
-function getPend(){return DB.stockRequests.filter(r=>r.status==='pending');}
+function getPend(){return DB.stockRequests.filter(r=>r.status==='pending'&&r.type==='restock');}
 function getPendMR(){return DB.missingReports.filter(r=>r.status==='pending');}
 function getPendCustReturns(){return DB.customerReturns.filter(r=>r.status==='pending');}
 function getDefectiveItems(){return DB.defectiveItems||(DB.defectiveItems=[]);}
@@ -677,8 +688,8 @@ const NAVDEF=[
   {id:'history',lbl:'Transactions',icon:'receipt',roles:['Manager','Staff']},
   {sec:'Management'},
   {id:'suppliers',lbl:'Suppliers',icon:'truck',roles:['Manager']},
-  {id:'requests',lbl:'Stock Requests',icon:'inbox',roles:['Manager'],badge:'req'},
-  {id:'restock',lbl:'Request Restock',icon:'send',roles:['Manager']},
+  {id:'stock-order',lbl:'Request New Stock',icon:'send',roles:['Manager'],badge:'req'},
+  {id:'stock-receive',lbl:'Supplier Proposals',icon:'inbox',roles:['Manager'],badge:'rdel'},
   {id:'staff',lbl:'Manage Staff',icon:'users',roles:['Manager']},
   {id:'users',lbl:'User Mgmt',icon:'shield',roles:['Admin']},
   {sec:'Analytics'},{id:'reports',lbl:'Sales Report',icon:'bar-chart-2',roles:['Manager']},
@@ -699,8 +710,8 @@ const PMETA={
   'report-missing':['Report Missing Item','Submit a missing item report to manager'],
   history:['Transaction History','Customer purchase records'],
   suppliers:['Suppliers','Supplier directory'],
-  requests:['Stock Requests','Review supplier proposals'],
-  restock:['Request Restock','Order from a specific supplier'],
+  'stock-order':['Request New Stock','Place and manage stock orders to suppliers'],
+  'stock-receive':['Supplier Proposals','Review new book & genre proposals from suppliers'],
   staff:['Manage Staff','Staff accounts'],
   users:['User Management','System accounts'],
   reports:['Sales Report','Analytics & reports'],
@@ -749,6 +760,7 @@ function buildNav(){
     const d=document.createElement('div');d.className='ni';d.dataset.page=item.id;
     let badge='';
     if(item.badge==='req') badge=getPend().length>0?`<span class="nb2">${getPend().length}</span>`:''
+    if(item.badge==='rdel'){const rc=DB.stockRequests.filter(r=>r.status==='approved').length;badge=rc>0?`<span class="nb2">${rc}</span>`:''}
     if(item.badge==='cret') badge=getPendCustReturns().length>0?'<span class="nb2">'+getPendCustReturns().length+'</span>':''
     if(item.badge==='deft') badge=getPendDefective().length>0?'<span class="nb2">'+getPendDefective().length+'</span>':''
     if(item.badge==='sret'){const sup=DB.suppliers.find(s=>s.userId===CU?.id);const c=sup?DB.supplierReturns.filter(r=>r.supplierId===sup.id&&r.status==='supplier-pending').length:0;badge=c>0?`<span class="nb2">${c}</span>`:'';};
@@ -764,7 +776,7 @@ function refreshBadges(){
     const item=NAVDEF.find(n=>n.id===el.dataset.page);
     if(!item||!item.badge)return;
     const ex=el.querySelector('.nb2');
-    const c=item.badge==='req'?getPend().length:item.badge==='deft'?getPendDefective().length:item.badge==='cret'?getPendCustReturns().length:item.badge==='sret'?(()=>{const sup=DB.suppliers.find(s=>s.userId===CU?.id);return sup?DB.supplierReturns.filter(r=>r.supplierId===sup.id&&r.status==='supplier-pending').length:0;})():getPendMR().length;
+    const c=item.badge==='req'?getPend().length:item.badge==='rdel'?DB.stockRequests.filter(r=>(r.type==='new_book'||r.type==='new_genre')&&r.status==='pending').length:item.badge==='deft'?getPendDefective().length:item.badge==='cret'?getPendCustReturns().length:item.badge==='sret'?(()=>{const sup=DB.suppliers.find(s=>s.userId===CU?.id);return sup?DB.supplierReturns.filter(r=>r.supplierId===sup.id&&r.status==='supplier-pending').length:0;})():getPendMR().length;
     if(c>0){if(ex)ex.textContent=c;else el.insertAdjacentHTML('beforeend',`<span class="nb2">${c}</span>`);}
     else if(ex)ex.remove();
   });
@@ -776,7 +788,7 @@ function nav(page){
   const m=PMETA[page]||[page,''];
   isel('tbt').textContent=m[0];isel('tbs').textContent=m[1];
   const pages={dashboard:pgDash,books:pgBooks,missing:pgMissing,'report-missing':pgReportMissing,returns:pgReturns,defective:pgDefective,'returns-supplier':pgReturnsSupplier,'sup-returns':pgSupReturns,
-    history:pgHistory,suppliers:pgSup,requests:pgRequests,restock:pgRestock,
+    history:pgHistory,suppliers:pgSup,'stock-order':pgStockOrder,'stock-receive':pgStockReceive,
     staff:pgStaff,users:pgUsers,reports:pgReports,
     'sup-dash':pgSupDash,'sup-submit':pgSupSubmit,'sup-hist':pgSupHist};
   if(pages[page])pages[page]();
@@ -1395,112 +1407,580 @@ function delSup(id){
 }
 
 /* ===== STOCK REQUESTS ===== */
-function pgRequests(flt='all'){
-  const all=DB.stockRequests;
-  const tabs=[{id:'all',lbl:'All',c:all.length},{id:'pending',lbl:'Pending',c:all.filter(r=>r.status==='pending').length},{id:'approved',lbl:'Approved',c:all.filter(r=>r.status==='approved').length},{id:'rejected',lbl:'Rejected',c:all.filter(r=>r.status==='rejected').length}];
-  const shown=flt==='all'?all:all.filter(r=>r.status===flt);
-  const tH=tabs.map(t=>`<button class="btn bsm ${flt===t.id?'bnn':'bno'}" onclick="pgRequests('${t.id}')">${t.lbl} <span class="badge bgr" style="margin-left:3px">${t.c}</span></button>`).join('');
-  const sm={pending:'by',approved:'bg2',rejected:'br2'};
-  const tl={restock:'Restock',new_book:'New Book',new_genre:'New Genre'};
-  const cards=shown.length?shown.map(r=>`<div class="src ${r.status}">
-    <div class="srh"><div><div class="srt">${r.bookTitle}</div><div class="srm">${r.supplierName} · ${fmtDT(r.submittedAt)}</div></div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap"><span class="badge bdk">${tl[r.type]||r.type}</span><span class="badge ${sm[r.status]}">${r.status}</span></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;font-size:.8rem">
-      <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Category</span>${r.category}</div>
-      <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Qty</span>${r.qty} units</div>
-      <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Unit Price</span>${rmF(r.unitPrice)}</div>
-    </div>
-    ${r.isNewGenre?`<div class="finfo" style="margin-bottom:7px"><i data-lucide="info"></i>New genre: <b>${r.category}</b> — ${r.newGenreDetails}</div>`:''}
-    <div style="font-size:.79rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r)">${r.note||'No notes.'}</div>
-    ${r.reviewNote?`<div style="margin-top:7px;font-size:.77rem;color:var(--tl)"><b>Review note:</b> ${r.reviewNote}</div>`:''}
-    ${r.status==='pending'?`<div class="sra"><button class="btn bns bsm" onclick="reviewReq('${r.id}','approved')"><i data-lucide="check"></i>Approve</button>
-      <button class="btn bnd bsm" onclick="reviewReq('${r.id}','rejected')"><i data-lucide="x"></i>Reject</button></div>`
-      :`<div style="font-size:.73rem;color:var(--tl);margin-top:7px">Reviewed: ${fmtDT(r.reviewedAt)}</div>`}
-  </div>`).join('')
-  :`<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="inbox"></i></div><h3>No requests</h3></div></div>`;
-  setHTML(`<div class="ph"><div><h2>Stock Requests</h2></div></div>
-    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">${tH}</div>${cards}`);
-}
-function reviewReq(id,dec){
-  openMo(dec==='approved'?'Approve Request':'Reject Request',`
-    <p style="margin-bottom:12px;font-size:.83rem;color:var(--tm)">${dec==='approved'?'Add an optional note:':'Please provide a rejection reason:'}</p>
-    <div class="fg"><label>Note${dec==='rejected'?' *':''}</label><textarea id="rvn" rows="3"></textarea></div>`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn ${dec==='approved'?'bns':'bnd'}" onclick="finalReview('${id}','${dec}')"><i data-lucide="${dec==='approved'?'check':'x'}"></i>Confirm</button>`);
-}
-function finalReview(id,dec){
-  const note=isel('rvn')?.value.trim()||'';
-  if(dec==='rejected'&&!note){toast('Rejection reason required.','error');return;}
-  const r=DB.stockRequests.find(x=>x.id===id);
-  r.status=dec;r.reviewedAt=new Date().toISOString();r.reviewNote=note;
-  if(dec==='approved'&&r.bookId){const b=DB.books.find(x=>x.id===r.bookId);if(b)b.qty+=r.qty;}
-  DB.notifications.push({id:uid('n'),title:`Request ${dec}: ${r.bookTitle}`,sub:`Your request was ${dec} by manager.${note?' Note: '+note:''}`,time:new Date().toISOString(),read:false,targetRole:'Supplier',link:'sup-hist'});
-  refreshBadges();refreshDot();toast(`Request ${dec}.`,'success');closeMo();pgRequests();
+/* =====================================================
+   REQUEST NEW STOCK — Manager places orders to suppliers
+   Progress: Draft → Pending → Approved → Rejected
+===================================================== */
+/* =====================================================
+   REQUEST NEW STOCK — Manager places restock orders
+   Progress: Order Placed → Pending Approval → Approved → Awaiting Delivery → Delivered
+===================================================== */
+function pgStockOrder(flt){
+  if(!flt)flt='pending';
+  var restock=DB.stockRequests.filter(function(r){return r.type==='restock';});
+  var counts={pending:0,approved:0,rejected:0,delivered:0};
+  restock.forEach(function(r){if(counts[r.status]!==undefined)counts[r.status]++;});
+  var shown=restock.filter(function(r){return r.status===flt;})
+    .slice().sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
+
+  var tabDefs=[
+    {id:'pending',  lbl:'Sent to Supplier',       icon:'send'},
+    {id:'approved', lbl:'Supplier Accepted',       icon:'check-circle'},
+    {id:'delivered',lbl:'Delivered',               icon:'package-check'},
+    {id:'rejected', lbl:'Supplier Rejected',       icon:'x-circle'},
+  ];
+  var tabs=tabDefs.map(function(t){
+    var active=flt===t.id;
+    return '<button class="btn bsm '+(active?'bnn':'bno')+'" onclick="pgStockOrder(\''+t.id+'\')"><i data-lucide="'+t.icon+'"></i> '+t.lbl+' <span class="badge bgr" style="margin-left:3px">'+counts[t.id]+'</span></button>';
+  }).join('');
+
+  /* 5-step progress:
+     Order Placed → Sent to Supplier → Supplier Accepted → Awaiting Delivery → Delivered
+     (Supplier Rejected branches off step 2) */
+  function orderProgress(r){
+    var s=r.status;
+    var isRej=s==='rejected';
+    var isAcc=s==='approved'||s==='delivered';
+    var isDel=s==='delivered';
+    var steps=[
+      {lbl:'Order Placed',        done:true,              active:false, fail:false},
+      {lbl:'Sent to Supplier',    done:isAcc||isRej,      active:s==='pending', fail:false},
+      {lbl:isRej?'Supplier Rejected':'Supplier Accepted', done:isAcc||isRej, active:false, fail:isRej},
+      {lbl:'Awaiting Delivery',   done:isDel,             active:s==='approved', fail:false},
+      {lbl:'Delivered',           done:isDel,             active:false, fail:false},
+    ];
+    var html=steps.map(function(st,i){
+      /* hide steps 3-4 if rejected */
+      if(isRej&&i>2)return '';
+      var dc=st.fail?'var(--dg)':st.done?'var(--ok)':st.active?'var(--wn)':'var(--bdm)';
+      var tc=st.done||st.active?'var(--tx)':'var(--tl)';
+      var fw=st.done||st.active?'700':'400';
+      var ico=st.done
+        ?'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><polyline points="'+(st.fail?'18 6 6 18 12 12':'20 6 9 17 4 12')+'"/></svg>'
+        :(st.active?'<svg width="7" height="7" viewBox="0 0 24 24" fill="#fff" stroke="none"><circle cx="12" cy="12" r="6"/></svg>':'');
+      var line=i<steps.length-1&&!(isRej&&i===2)?'<div style="flex:1;height:2px;background:'+(st.done&&!st.fail?'var(--ok)':'var(--bdm)')+';margin-top:8px;min-width:16px"></div>':'';
+      return '<div style="display:flex;flex-direction:column;align-items:center;min-width:54px;max-width:70px">'
+        +'<div style="width:18px;height:18px;border-radius:50%;background:'+dc+';display:flex;align-items:center;justify-content:center">'+ico+'</div>'
+        +'<div style="font-size:.59rem;color:'+tc+';margin-top:3px;font-weight:'+fw+';text-align:center;line-height:1.2">'+st.lbl+'</div>'
+        +'</div>'+line;
+    }).join('');
+    return '<div style="display:flex;align-items:flex-start;justify-content:center;padding:12px 6px 8px;background:var(--bg);border-radius:var(--r);margin-bottom:10px;flex-wrap:nowrap;overflow-x:auto;gap:0">'+html+'</div>';
+  }
+
+  var cards=shown.length?shown.map(function(r){
+    var sup=DB.suppliers.find(function(s){return s.id===r.supplierId;});
+    var bc=r.status==='pending'?'var(--wn)':r.status==='approved'?'var(--ok)':r.status==='rejected'?'var(--dg)':'var(--ac)';
+    var contact=sup?'<div style="font-size:.71rem;color:var(--tl);margin-top:2px">'+sup.phone+' &nbsp;·&nbsp; '+sup.email+'</div>':'';
+
+    /* Status label */
+    var statusLabel={pending:'Awaiting Supplier Response',approved:'Supplier Accepted',rejected:'Supplier Rejected',delivered:'Delivered'};
+    var statusBadge={pending:'by',approved:'bg2',rejected:'br2',delivered:'bb'};
+
+    /* Only action: confirm delivery when supplier has accepted */
+    var actions='';
+    if(r.status==='approved'){
+      actions='<div style="margin-top:10px">'
+        +'<button class="btn bna" onclick="markDelivered(\''+r.id+'\')"><i data-lucide="package-check"></i>Confirm Delivery Received</button>'
+        +'</div>';
+    }
+
+    var responseLine=r.reviewedAt
+      ?'<div style="font-size:.72rem;margin-top:6px;padding:6px 9px;background:'+(r.status==='rejected'?'var(--dlt)':'var(--olt)')+';border-radius:var(--r);color:'+(r.status==='rejected'?'var(--dg)':'var(--ok)')+'"><b>'+(r.status==='rejected'?'Supplier rejected this order':'Supplier accepted this order')+'</b> — recorded '+fmtDT(r.reviewedAt)+(r.reviewNote?' &nbsp;·&nbsp; Note: '+r.reviewNote:'')+'</div>':'';
+    var deliveredLine=r.deliveredAt
+      ?'<div style="margin-top:8px;padding:8px 11px;background:var(--olt);border-radius:var(--r);font-size:.78rem;color:var(--ok)">'
+        +'<b>Delivered</b> on '+fmtDT(r.deliveredAt)+(r.deliveryNote?' — '+r.deliveryNote:'')
+        +'<div style="font-size:.7rem;margin-top:3px;color:var(--tl)">Inventory updated: +'+r.qty+' units of "'+r.bookTitle+'" added.</div></div>':'';
+
+    return '<div style="border:1px solid var(--bd);border-left:4px solid '+bc+';border-radius:var(--rl);padding:14px 16px;margin-bottom:12px;background:var(--wh);box-shadow:var(--sh)">'
+      +orderProgress(r)
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'
+        +'<div><div style="font-size:.88rem;font-weight:700;color:var(--navy)">'+r.bookTitle+'</div>'
+        +'<div style="font-size:.72rem;color:var(--tl);margin-top:1px">'+r.supplierName+' &nbsp;·&nbsp; Ordered: '+fmtDT(r.submittedAt)+'</div>'
+        +contact+'</div>'
+        +'<span class="badge '+(statusBadge[r.status]||'bgr')+'">'+(statusLabel[r.status]||r.status)+'</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;font-size:.8rem">'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Category</span>'+r.category+'</div>'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Qty Ordered</span><b>'+r.qty+' units</b></div>'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Unit Price</span>'+rmF(r.unitPrice)+'</div>'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Total Value</span><b>'+rmF(r.qty*r.unitPrice)+'</b></div>'
+      +'</div>'
+      +(r.note?'<div style="font-size:.78rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r)"><b>Order note:</b> '+r.note+'</div>':'')
+      +responseLine+deliveredLine+actions
+      +'</div>';
+  }).join('')
+  :'<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="send"></i></div>'
+    +'<h3>No '+flt.replace('approved','accepted').replace('rejected','rejected by supplier')+' orders</h3>'
+    +'<p>'+(flt==='pending'?'Place a new order using the button above — then contact the supplier and record their response.':'Nothing here yet.')+'</p></div></div>';
+
+  setHTML(
+    '<div class="ph"><div><h2>Request New Stock</h2><p>Place orders to suppliers — record their response and confirm delivery</p></div>'
+    +'<button class="btn bnn" onclick="openNewOrderForm()"><i data-lucide="plus"></i>New Order</button></div>'
+    +'<div class="sg" style="grid-template-columns:repeat(4,1fr);margin-bottom:15px">'
+      +'<div class="sc"><div class="si warn"><i data-lucide="send"></i></div><div><div class="sv">'+counts.pending+'</div><div class="sl">Awaiting Response</div></div></div>'
+      +'<div class="sc"><div class="si green"><i data-lucide="check-circle"></i></div><div><div class="sv">'+counts.approved+'</div><div class="sl">Supplier Accepted</div></div></div>'
+      +'<div class="sc"><div class="si blue"><i data-lucide="package-check"></i></div><div><div class="sv">'+counts.delivered+'</div><div class="sl">Delivered</div></div></div>'
+      +'<div class="sc"><div class="si red"><i data-lucide="x-circle"></i></div><div><div class="sv">'+counts.rejected+'</div><div class="sl">Supplier Rejected</div></div></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">'+tabs+'</div>'
+    +cards
+  );
 }
 
-/* ===== RESTOCK (Manager order to supplier) ===== */
-function pgRestock(){
-  const sO=DB.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  setHTML(`<div class="ph"><div><h2>Request Restock</h2><p>Order stock directly from a specific supplier</p></div></div>
-    <div class="card" style="max-width:680px"><div class="ch"><h2>Create Restock Order</h2></div><div class="cb">
-      <div class="finfo"><i data-lucide="info"></i>Select a supplier — the book list will filter to that supplier's titles.</div>
-      <div class="fgrid">
-        <div class="fg full"><label>Supplier *</label>
-          <select id="rs" onchange="rstBooks()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)">
-            <option value="">Select supplier…</option>${sO}</select></div>
-        <div class="fg full" id="rbw" style="display:none"><label>Book *</label>
-          <select id="rb" onchange="rstInfo()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)">
-            <option value="">Select book…</option></select></div>
-        <div id="ri" style="display:none;grid-column:1/-1;background:var(--bg);border-radius:var(--r);padding:11px 13px">
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:.8rem">
-            <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">SKU</span><b id="rsku" style="font-family:monospace"></b></div>
-            <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">RFID</span><b id="rrfid" style="font-family:monospace"></b></div>
-            <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Current Stock</span><b id="rc"></b></div>
-            <div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Status</span><span id="rstst"></span></div>
-          </div></div>
-        <div class="fg" id="rqw" style="display:none"><label>Quantity to Order *</label><input id="rq" type="number" min="1" placeholder="e.g. 20"/></div>
-        <div class="fg" id="rpw" style="display:none"><label>Agreed Unit Price (RM)</label><input id="rp2" type="number" min="0" step="0.01"/></div>
-        <div class="fg full" id="rnw" style="display:none"><label>Note to Supplier</label><textarea id="rn" rows="2" placeholder="e.g. Urgent — needed by end of week."></textarea></div>
-      </div>
-      <div class="fa" id="rfa" style="display:none">
-        <button class="btn bno" onclick="pgRestock()">Clear</button>
-        <button class="btn bna" onclick="submitRestock()"><i data-lucide="send"></i>Send Restock Order</button>
-      </div>
-    </div></div>`);
+/* Manager records the supplier's response (after calling/emailing them) */
+function recordSupplierResponse(id,dec){
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  var isAcc=dec==='approved';
+  var label=isAcc?'Record: Supplier Accepted':'Record: Supplier Rejected';
+  var body='<div class="finfo"><i data-lucide="'+(isAcc?'check-circle':'x-circle')+'"></i>'
+    +(isAcc?'Record that the supplier has accepted this order and will proceed with delivery.':'Record that the supplier has rejected or cannot fulfil this order.')+'</div>'
+    +'<div class="fg" style="margin-top:10px"><label>Note'+(isAcc?'':' *')+'</label>'
+    +'<textarea id="rvn" rows="3" placeholder="'+(isAcc?'e.g. Supplier confirmed. Estimated delivery in 3\u20135 days.':'e.g. Supplier out of stock. Will retry next month.')+'"></textarea></div>';
+  var foot='<button class="btn bno" onclick="closeMo()">Cancel</button>'
+    +'<button class="btn '+(isAcc?'bns':'bnd')+'" onclick="finalSupplierResponse(\''+id+'\',\''+dec+'\')"><i data-lucide="'+(isAcc?'check-circle':'x-circle')+'"></i>'+label+'</button>';
+  openMo(label,body,foot);
 }
-function rstBooks(){
-  const sid=isel('rs').value;const wrap=isel('rbw');
-  if(!sid){wrap.style.display='none';isel('ri').style.display='none';return;}
-  const bks=DB.books.filter(b=>b.supplierId===sid);
-  const sel=isel('rb');
-  sel.innerHTML='<option value="">Select book…</option>'+bks.map(b=>`<option value="${b.id}">${b.sku} — ${b.title} (Qty:${b.qty})</option>`).join('');
-  wrap.style.display='flex';isel('ri').style.display='none';
-  ['rqw','rpw','rnw','rfa'].forEach(i=>{isel(i).style.display='none';});
-  if(window.lucide&&lucide.createIcons)try{if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){};}catch(e){}
+
+function finalSupplierResponse(id,dec){
+  var note=isel('rvn')?isel('rvn').value.trim():'';
+  if(dec==='rejected'&&!note){toast('Please provide a reason for the rejection.','error');return;}
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  r.status=dec;r.reviewedAt=new Date().toISOString();r.reviewNote=note;
+  refreshBadges();refreshDot();
+  toast(dec==='approved'?'Supplier acceptance recorded.':'Supplier rejection recorded.','success');
+  closeMo();pgStockOrder(dec);
 }
-function rstInfo(){
-  const bId=isel('rb').value;if(!bId){isel('ri').style.display='none';return;}
-  const b=DB.books.find(x=>x.id===bId);const st=sSt(b);
-  isel('rsku').textContent=b.sku;isel('rrfid').textContent=b.rfid;
-  isel('rc').textContent=b.qty+' units';
-  isel('rstst').innerHTML=`<span class="badge ${st.cls}">${st.label}</span>`;
-  isel('rp2').value=b.price.toFixed(2);
-  isel('ri').style.display='block';
-  ['rqw','rpw','rnw','rfa'].forEach(i=>{isel(i).style.display='flex';});
-  isel('rfa').style.display='flex';if(window.lucide&&lucide.createIcons)try{if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){};}catch(e){}
+
+function openNewOrderForm(){
+  var sO=DB.suppliers.map(function(s){return '<option value="'+s.id+'">'+s.name+'</option>';}).join('');
+  var body='<div class="finfo"><i data-lucide="send"></i>Place a stock order. After submitting, contact the supplier (phone/email) and record their response here.</div>'
+    +'<div class="fgrid">'
+    +'<div class="fg full"><label>Supplier *</label>'
+    +'<select id="no-sup" onchange="noLoadBooks()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)"><option value="">Select supplier\u2026</option>'+sO+'</select></div>'
+    +'<div class="fg full" id="no-bookwrap" style="display:none"><label>Book *</label>'
+    +'<select id="no-book" onchange="noLoadInfo()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)"><option value="">Select book\u2026</option></select></div>'
+    +'<div id="no-info" style="display:none;grid-column:1/-1;background:var(--bg);border-radius:var(--r);padding:10px 13px;font-size:.8rem"></div>'
+    +'<div class="fg" id="no-qtywrap" style="display:none"><label>Quantity to Order *</label><input id="no-qty" type="number" min="1" placeholder="e.g. 20"/></div>'
+    +'<div class="fg" id="no-pricewrap" style="display:none"><label>Agreed Unit Price (RM)</label><input id="no-price" type="number" min="0" step="0.01"/></div>'
+    +'<div class="fg full" id="no-notewrap" style="display:none"><label>Note to Supplier</label><textarea id="no-note" rows="2" placeholder="e.g. Urgent \u2014 needed by end of week."></textarea></div>'
+    +'</div>';
+  var foot='<button class="btn bno" onclick="closeMo()">Cancel</button>'
+    +'<button class="btn bna" id="no-submit" style="display:none" onclick="submitNewOrder()"><i data-lucide="send"></i>Place Order</button>';
+  openMo('New Stock Order',body,foot,true);
 }
-function submitRestock(){
-  const sid=isel('rs').value,bId=isel('rb').value;
-  const qty=parseInt(isel('rq').value)||0,price=parseFloat(isel('rp2').value)||0;
-  const note=isel('rn').value.trim();
-  if(!sid||!bId||qty<=0){toast('Fill all required fields.','error');return;}
-  const b=DB.books.find(x=>x.id===bId),sup=DB.suppliers.find(x=>x.id===sid);
-  DB.stockRequests.push({id:uid('req'),supplierId:sid,supplierName:sup.name,type:'restock',bookId:bId,bookTitle:b.title,category:b.category,isNewGenre:false,newGenreDetails:'',qty,unitPrice:price||b.price,note:'[Manager order] '+note,status:'approved',submittedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewNote:'Auto-approved by manager.'});
-  b.qty+=qty;
-  DB.notifications.push({id:uid('n'),title:'Restock order received',sub:`${b.title} — ${qty} units ordered by manager`,time:new Date().toISOString(),read:false,targetRole:'Supplier',link:'sup-hist'});
-  refreshBadges();refreshDot();toast(`Restock order placed: +${qty} units of "${b.title}"`,'success');pgRestock();
+
+function noLoadBooks(){
+  var sid=isel('no-sup').value;
+  ['no-info','no-qtywrap','no-pricewrap','no-notewrap'].forEach(function(i){var el=isel(i);if(el)el.style.display='none';});
+  var sub=isel('no-submit');if(sub)sub.style.display='none';
+  var wrap=isel('no-bookwrap');
+  if(!sid){if(wrap)wrap.style.display='none';return;}
+  var bks=DB.books.filter(function(b){return b.supplierId===sid;});
+  var sel=isel('no-book');
+  sel.innerHTML='<option value="">Select book\u2026</option>'+bks.map(function(b){return '<option value="'+b.id+'">'+b.sku+' \u2014 '+b.title+' (Stock: '+b.qty+')</option>';}).join('');
+  if(wrap)wrap.style.display='flex';
+  if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}
 }
+
+function noLoadInfo(){
+  var bId=isel('no-book').value;
+  var infoEl=isel('no-info');
+  var sub=isel('no-submit');
+  ['no-qtywrap','no-pricewrap','no-notewrap'].forEach(function(i){var el=isel(i);if(el)el.style.display='none';});
+  if(sub)sub.style.display='none';
+  if(!bId){if(infoEl)infoEl.style.display='none';return;}
+  var b=DB.books.find(function(x){return x.id===bId;});
+  var st=sSt(b);
+  infoEl.innerHTML='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
+    +'<div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">SKU</span><b style="font-family:monospace">'+b.sku+'</b></div>'
+    +'<div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Current Stock</span><b>'+b.qty+' units</b></div>'
+    +'<div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Status</span><span class="badge '+st.cls+'">'+st.label+'</span></div>'
+    +'<div><span style="font-size:.67rem;color:var(--tl);display:block;text-transform:uppercase">Unit Price</span>'+rmF(b.price)+'</div>'
+    +'</div>';
+  infoEl.style.display='block';
+  if(isel('no-price'))isel('no-price').value=b.price.toFixed(2);
+  ['no-qtywrap','no-pricewrap','no-notewrap'].forEach(function(i){var el=isel(i);if(el)el.style.display='flex';});
+  if(sub)sub.style.display='inline-flex';
+  if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}
+}
+
+function submitNewOrder(){
+  var sid=isel('no-sup').value,bId=isel('no-book').value;
+  var qty=parseInt(isel('no-qty').value)||0;
+  var price=parseFloat(isel('no-price').value)||0;
+  var note=isel('no-note')?isel('no-note').value.trim():'';
+  if(!sid||!bId||qty<=0){toast('Please fill all required fields.','error');return;}
+  var b=DB.books.find(function(x){return x.id===bId;});
+  var sup=DB.suppliers.find(function(x){return x.id===sid;});
+  DB.stockRequests.push({
+    id:uid('req'),supplierId:sid,supplierName:sup.name,
+    type:'restock',bookId:bId,bookTitle:b.title,
+    category:b.category,isNewGenre:false,newGenreDetails:'',
+    qty:qty,unitPrice:price||b.price,note:note,
+    status:'pending',
+    submittedAt:new Date().toISOString(),
+    reviewedAt:null,reviewNote:'',
+    deliveredAt:null,deliveryNote:''
+  });
+  refreshBadges();refreshDot();
+  toast('Order placed \u2014 now contact '+sup.name+' and record their response here.','success');
+  closeMo();pgStockOrder('pending');
+}
+
+function markDelivered(id){
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  var body='<div class="finfo"><i data-lucide="package-check"></i>Confirming delivery will add <b>'+r.qty+' units</b> of "'+r.bookTitle+'" to inventory.</div>'
+    +'<div class="fg" style="margin-top:12px"><label>Delivery Note (optional)</label>'
+    +'<textarea id="delnote" rows="3" placeholder="e.g. All '+r.qty+' units received in good condition. Invoice #INV-2026-XXX."></textarea></div>';
+  var foot='<button class="btn bno" onclick="closeMo()">Cancel</button>'
+    +'<button class="btn bna" onclick="confirmDelivery(\''+id+'\')"><i data-lucide="package-check"></i>Confirm Delivery</button>';
+  openMo('Confirm Delivery \u2014 '+r.bookTitle,body,foot);
+}
+
+function confirmDelivery(id){
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  var note=isel('delnote')?isel('delnote').value.trim():'';
+  r.status='delivered';r.deliveredAt=new Date().toISOString();r.deliveryNote=note;
+  if(r.bookId){
+    var b=DB.books.find(function(x){return x.id===r.bookId;});
+    if(b){b.qty+=r.qty;toast('Delivery confirmed: +'+r.qty+' units of "'+r.bookTitle+'" added to inventory.','success');}
+    else{toast('Delivered. Book not found in catalogue \u2014 add manually.','info');}
+  } else {toast('Delivered. New book/genre \u2014 add to catalogue manually.','info');}
+  refreshBadges();refreshDot();closeMo();pgStockOrder('delivered');
+}
+
+
+/* =====================================================
+   SUPPLIER PROPOSALS — Supplier proposes new books / genres
+   Manager reviews and accepts or rejects
+   Progress: Submitted → Under Review → Accepted / Rejected
+===================================================== */
+function pgStockReceive(flt){
+  if(!flt)flt='pending';
+  var proposals=DB.stockRequests.filter(function(r){return r.type==='new_book'||r.type==='new_genre';});
+  /* Status buckets: pending / approved (awaiting delivery) / delivered / rejected */
+  var counts={pending:0,approved:0,delivered:0,rejected:0};
+  proposals.forEach(function(r){if(counts[r.status]!==undefined)counts[r.status]++;});
+  var shown=proposals.filter(function(r){return r.status===flt;})
+    .slice().sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
+
+  var tabDefs=[
+    {id:'pending',  lbl:'Pending Review',    icon:'clock'},
+    {id:'approved', lbl:'Awaiting Delivery', icon:'truck'},
+    {id:'delivered',lbl:'Delivered',         icon:'package-check'},
+    {id:'rejected', lbl:'Rejected',          icon:'x-circle'},
+  ];
+  var tabs=tabDefs.map(function(t){
+    var active=flt===t.id;
+    return '<button class="btn bsm '+(active?'bnn':'bno')+'" onclick="pgStockReceive(\''+t.id+'\')"><i data-lucide="'+t.icon+'"></i> '+t.lbl+' <span class="badge bgr" style="margin-left:3px">'+counts[t.id]+'</span></button>';
+  }).join('');
+
+  /* 5-step progress bar:
+     Submitted → Under Review → Accepted → Awaiting Delivery → Delivered
+     (Rejected branches off step 2) */
+  function proposalProgress(r){
+    var s=r.status;
+    var isRej=s==='rejected';
+    var isDel=s==='delivered';
+    var isAcc=s==='approved'||isDel;
+    var steps=[
+      {lbl:'Submitted',        done:true,           active:false, fail:false},
+      {lbl:'Under Review',     done:isAcc||isRej,   active:s==='pending', fail:false},
+      {lbl:isRej?'Rejected':'Accepted', done:isAcc||isRej, active:false, fail:isRej},
+      {lbl:'Awaiting Delivery',done:isDel,           active:s==='approved', fail:false},
+      {lbl:'Delivered',        done:isDel,           active:false, fail:false},
+    ];
+    var html=steps.map(function(st,i){
+      var dc=st.fail?'var(--dg)':st.done?'var(--ok)':st.active?'var(--wn)':'var(--bdm)';
+      var tc=st.done||st.active?'var(--tx)':'var(--tl)';
+      var fw=st.done||st.active?'700':'400';
+      var ico=st.done
+        ?'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><polyline points="'+(st.fail?'18 6 6 18 12 12':'20 6 9 17 4 12')+'"/></svg>'
+        :(st.active?'<svg width="7" height="7" viewBox="0 0 24 24" fill="#fff" stroke="none"><circle cx="12" cy="12" r="6"/></svg>':'');
+      /* hide steps 3 & 4 if rejected */
+      if(isRej&&i>2)return '';
+      var line=i<steps.length-1&&!(isRej&&i===2)?'<div style="flex:1;height:2px;background:'+(st.done&&!st.fail?'var(--ok)':'var(--bdm)')+';margin-top:8px;min-width:18px"></div>':'';
+      return '<div style="display:flex;flex-direction:column;align-items:center;min-width:52px;max-width:68px">'
+        +'<div style="width:18px;height:18px;border-radius:50%;background:'+dc+';display:flex;align-items:center;justify-content:center">'+ico+'</div>'
+        +'<div style="font-size:.6rem;color:'+tc+';margin-top:3px;font-weight:'+fw+';text-align:center;line-height:1.2">'+st.lbl+'</div>'
+        +'</div>'+line;
+    }).join('');
+    return '<div style="display:flex;align-items:flex-start;justify-content:center;padding:12px 8px 8px;background:var(--bg);border-radius:var(--r);margin-bottom:10px;flex-wrap:nowrap;overflow-x:auto">'+html+'</div>';
+  }
+
+  var typeLabel={new_book:'New Book Title',new_genre:'New Genre / Category'};
+  var typeBadge={new_book:'bp',new_genre:'bb'};
+
+  var cards=shown.length?shown.map(function(r){
+    var sup=DB.suppliers.find(function(s){return s.id===r.supplierId;});
+    var s=r.status;
+    var bc=s==='rejected'?'var(--dg)':s==='delivered'?'var(--ac)':s==='approved'?'var(--ok)':'var(--wn)';
+    var contact=sup?'<div style="font-size:.71rem;color:var(--tl);margin-top:2px">'+sup.phone+' &nbsp;·&nbsp; '+sup.email+'</div>':'';
+    var statusLbl=s==='approved'?'Awaiting Delivery':s;
+
+    /* action buttons */
+    var actions='';
+    if(s==='pending'){
+      actions='<div style="display:flex;gap:7px;margin-top:12px">'
+        +'<button class="btn bns bsm" onclick="reviewProposal(\''+r.id+'\',\'approved\')"><i data-lucide="check-circle"></i>Accept</button>'
+        +'<button class="btn bnd bsm" onclick="reviewProposal(\''+r.id+'\',\'rejected\')"><i data-lucide="x-circle"></i>Reject</button>'
+        +'</div>';
+    } else if(s==='approved'){
+      actions='<div style="margin-top:12px">'
+        +'<button class="btn bna" onclick="confirmProposalDelivery(\''+r.id+'\')"><i data-lucide="package-check"></i>Confirm Delivery &amp; Add Book to System</button>'
+        +'</div>';
+    }
+
+    var reviewLine=r.reviewedAt
+      ?'<div style="margin-top:7px;padding:7px 10px;background:'+(s==='rejected'?'var(--dlt)':'var(--olt)')+';border-radius:var(--r);font-size:.77rem;color:'+(s==='rejected'?'var(--dg)':'var(--ok)')+'"><b>'+(s==='rejected'?'✗ Rejected':'✓ Accepted')+'</b> on '+fmtDT(r.reviewedAt)+(r.reviewNote?' — '+r.reviewNote:'')+'</div>':'';
+
+    var deliveredBlock=r.deliveredAt
+      ?'<div style="margin-top:8px;padding:9px 12px;background:var(--olt);border-radius:var(--r);font-size:.78rem;color:var(--ok)">'
+        +'<b><i data-lucide="package-check" style="font-size:.8rem"></i> Delivered &amp; Added to Catalogue</b> on '+fmtDT(r.deliveredAt)
+        +(r.deliveryNote?' — '+r.deliveryNote:'')
+        +(r.addedBookId?'<div style="margin-top:6px;padding:5px 8px;background:rgba(5,150,105,.1);border-radius:4px;font-size:.74rem">'
+          +'Book added: <b>'+r.bookTitle+'</b>'
+          +(r.addedSKU?' &nbsp;·&nbsp; SKU: <span class="sku">'+r.addedSKU+'</span>':'')
+          +(r.addedRFID?' &nbsp;·&nbsp; RFID: <span class="rfidtag">'+r.addedRFID+'</span>':'')
+          +'</div>':'')
+        +'</div>':'';
+
+    var genreNote=r.isNewGenre?'<div style="font-size:.79rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r);margin-bottom:6px"><b>Genre justification:</b> '+r.newGenreDetails+'</div>':'';
+
+    return '<div style="border:1px solid var(--bd);border-left:4px solid '+bc+';border-radius:var(--rl);padding:14px 16px;margin-bottom:12px;background:var(--wh);box-shadow:var(--sh)">'
+      +proposalProgress(r)
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'
+        +'<div><div style="font-size:.88rem;font-weight:700;color:var(--navy)">'+r.bookTitle+'</div>'
+        +'<div style="font-size:.72rem;color:var(--tl);margin-top:1px">From: '+r.supplierName+' &nbsp;·&nbsp; '+fmtDT(r.submittedAt)+'</div>'
+        +contact+'</div>'
+        +'<div style="display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0">'
+          +'<span class="badge '+(typeBadge[r.type]||'bgr')+'">'+(typeLabel[r.type]||r.type)+'</span>'
+        +'</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;font-size:.8rem">'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Category</span>'+r.category+'</div>'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Proposed Qty</span><b>'+r.qty+' units</b></div>'
+        +'<div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Unit Price</span>'+rmF(r.unitPrice)+'</div>'
+      +'</div>'
+      +genreNote
+      +(r.note?'<div style="font-size:.78rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r);margin-bottom:6px"><b>Supplier note:</b> '+r.note+'</div>':'')
+      +reviewLine+deliveredBlock+actions
+      +'</div>';
+  }).join('')
+  :'<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="'+(flt==='pending'?'inbox':flt==='approved'?'truck':'package-check')+'"></i></div>'
+    +'<h3>No '+flt+' proposals</h3>'
+    +'<p>'+(flt==='pending'?'Log a supplier proposal using the button above.':flt==='approved'?'Accepted proposals waiting for delivery appear here.':'Nothing here yet.')+'</p></div></div>';
+
+  setHTML(
+    '<div class="ph"><div><h2>Supplier Proposals</h2><p>New book &amp; genre proposals from suppliers — accept to add to the system</p></div>'
+    +'<button class="btn bnn" onclick="openAddProposalForm()"><i data-lucide="plus"></i>Log Proposal</button></div>'
+    +'<div class="sg" style="grid-template-columns:repeat(4,1fr);margin-bottom:15px">'
+      +'<div class="sc"><div class="si warn"><i data-lucide="clock"></i></div><div><div class="sv">'+counts.pending+'</div><div class="sl">Pending Review</div></div></div>'
+      +'<div class="sc"><div class="si green"><i data-lucide="truck"></i></div><div><div class="sv">'+counts.approved+'</div><div class="sl">Awaiting Delivery</div></div></div>'
+      +'<div class="sc"><div class="si blue"><i data-lucide="package-check"></i></div><div><div class="sv">'+counts.delivered+'</div><div class="sl">Delivered</div></div></div>'
+      +'<div class="sc"><div class="si red"><i data-lucide="x-circle"></i></div><div><div class="sv">'+counts.rejected+'</div><div class="sl">Rejected</div></div></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">'+tabs+'</div>'
+    +cards
+  );
+}
+
+function reviewProposal(id,dec){
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  var label=dec==='approved'?'Accept Proposal':'Reject Proposal';
+  var bd=r.pendingBookData||{};
+  var body='';
+  if(dec==='approved'){
+    /* Show supplier-provided details as read-only summary, just ask for approval note */
+    body='<div style="padding:10px 13px;background:var(--bg);border-radius:var(--r);margin-bottom:12px;font-size:.8rem">'
+      +'<div style="font-weight:700;color:var(--navy);margin-bottom:6px">Proposal Details (from supplier)</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+        +'<div><span style="font-size:.67rem;color:var(--tl);text-transform:uppercase">Title</span><div style="font-weight:600">'+r.bookTitle+'</div></div>'
+        +'<div><span style="font-size:.67rem;color:var(--tl);text-transform:uppercase">Author</span><div>'+(bd.author||'—')+'</div></div>'
+        +'<div><span style="font-size:.67rem;color:var(--tl);text-transform:uppercase">Category</span><div>'+(bd.cat||r.category)+'</div></div>'
+        +'<div><span style="font-size:.67rem;color:var(--tl);text-transform:uppercase">ISBN</span><div style="font-family:monospace">'+(bd.isbn||'—')+'</div></div>'
+        +'<div><span style="font-size:.67rem;color:var(--tl);text-transform:uppercase">Unit Price</span><div>'+rmF(bd.price||r.unitPrice)+'</div></div>'
+        +'<div><span style="font-size:.67rem;color:var(--tl);text-transform:uppercase">Qty</span><div>'+(bd.qty||r.qty)+' units</div></div>'
+      +'</div>'
+      +(r.isNewGenre?'<div style="margin-top:7px;font-size:.77rem;color:var(--pu)"><b>New genre:</b> '+r.category+' — '+r.newGenreDetails+'</div>':'')
+      +'</div>'
+      +'<div class="fg"><label>Approval Note (optional)</label>'
+      +'<textarea id="rvn" rows="2" placeholder="e.g. Accepted. Will begin stocking next month."></textarea></div>';
+  } else {
+    body='<p style="margin-bottom:10px;font-size:.83rem;color:var(--tm)">Please provide a rejection reason:</p>'
+      +'<div class="fg"><label>Reason *</label><textarea id="rvn" rows="3" placeholder="e.g. Category not in demand currently."></textarea></div>';
+  }
+  var foot='<button class="btn bno" onclick="closeMo()">Cancel</button>'
+    +'<button class="btn '+(dec==='approved'?'bns':'bnd')+'" onclick="finalProposalReview(\''+id+'\',\''+dec+'\')"><i data-lucide="'+(dec==='approved'?'check-circle':'x-circle')+'"></i>'+label+'</button>';
+  openMo(label,body,foot,true);
+}
+
+function finalProposalReview(id,dec){
+  var note=isel('rvn')?isel('rvn').value.trim():'';
+  if(dec==='rejected'&&!note){toast('Please provide a rejection reason.','error');return;}
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  if(dec==='approved'){
+    /* Auto-add new genre to category list immediately on accept */
+    var cat=(r.pendingBookData&&r.pendingBookData.cat)||r.category;
+    if(r.isNewGenre&&DB.settings.categories.indexOf(cat)<0){
+      DB.settings.categories.push(cat);DB.settings.categories.sort();
+    }
+  }
+  r.status=dec;r.reviewedAt=new Date().toISOString();r.reviewNote=note;
+  refreshBadges();refreshDot();
+  toast(dec==='approved'?'Proposal accepted \u2014 awaiting delivery.':'Proposal rejected.', dec==='approved'?'success':'info');
+  closeMo();pgStockReceive(dec==='approved'?'approved':dec);
+}
+
+function confirmProposalDelivery(id){
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  var bd=r.pendingBookData||{};
+  var body='<div class="finfo"><i data-lucide="package-check"></i>Confirming delivery will create the book in the catalogue with an auto-generated SKU &amp; RFID tag, and set stock to <b>'+r.qty+' units</b>.</div>'
+    +'<div style="margin:10px 0;padding:10px 12px;background:var(--bg);border-radius:var(--r);font-size:.8rem">'
+      +'<b>'+r.bookTitle+'</b><br>'
+      +'<span style="color:var(--tl)">Category: '+(bd.cat||r.category)+' &nbsp;·&nbsp; Qty: '+r.qty+' &nbsp;·&nbsp; Price: '+rmF(bd.price||r.unitPrice)+'</span>'
+    +'</div>'
+    +'<div class="fg"><label>Delivery Note (optional)</label>'
+    +'<textarea id="pdelnote" rows="3" placeholder="e.g. All '+r.qty+' copies received. Invoice #INV-2026-XXX."></textarea></div>';
+  var foot='<button class="btn bno" onclick="closeMo()">Cancel</button>'
+    +'<button class="btn bna" onclick="finalProposalDelivery(\''+id+'\')"><i data-lucide="package-check"></i>Confirm &amp; Add to Catalogue</button>';
+  openMo('Confirm Delivery \u2014 '+r.bookTitle,body,foot,true);
+}
+
+function finalProposalDelivery(id){
+  var r=DB.stockRequests.find(function(x){return x.id===id;});
+  var bd=r.pendingBookData||{};
+  var note=isel('pdelnote')?isel('pdelnote').value.trim():'';
+
+  /* Auto-generate unique SKU, RFID, Barcode */
+  var n=DB.books.length+1;
+  /* Find a unique RFID number */
+  var existingRFIDs=DB.books.map(function(b){var m=b.rfid.match(/(\d+)$/);return m?parseInt(m[1]):0;});
+  var maxRFID=existingRFIDs.length?Math.max.apply(null,existingRFIDs):0;
+  var rfidN=maxRFID+1;
+  /* Find a unique SKU number for this category */
+  var cat=bd.cat||r.category;
+  var catMap={'Computer Science':'CS','Mathematics':'MA','Science':'SC','Business':'BU','History':'HI','Economics':'EC','Engineering':'EN','Literature':'LI'};
+  var prefix=catMap[cat]||cat.substring(0,2).toUpperCase();
+  var existingSKUs=DB.books.filter(function(b){return b.sku.indexOf('BT-'+prefix+'-')===0;})
+    .map(function(b){var m=b.sku.match(/(\d+)$/);return m?parseInt(m[1]):0;});
+  var skuN=(existingSKUs.length?Math.max.apply(null,existingSKUs):0)+1;
+  var newSKU='BT-'+prefix+'-'+String(skuN).padStart(3,'0');
+  var newRFID='RFID-'+String(rfidN).padStart(4,'0');
+  var newBarcode='978013'+String(n+100).padStart(7,'0');
+
+  /* Ensure category exists */
+  if(DB.settings.categories.indexOf(cat)<0){
+    DB.settings.categories.push(cat);DB.settings.categories.sort();
+  }
+
+  /* Create the book */
+  var newBook={
+    id:uid('b'),
+    title:bd.title||r.bookTitle,
+    author:bd.author||'Unknown',
+    isbn:bd.isbn||('978-0-NEW-'+String(n).padStart(4,'0')),
+    category:cat,
+    price:bd.price||r.unitPrice,
+    qty:r.qty,
+    minStock:bd.minStock||5,
+    supplierId:bd.supId||r.supplierId,
+    sku:newSKU,
+    rfid:newRFID,
+    barcode:newBarcode,
+  };
+  DB.books.push(newBook);
+
+  /* Mark proposal as delivered */
+  r.status='delivered';
+  r.deliveredAt=new Date().toISOString();
+  r.deliveryNote=note;
+  r.addedBookId=newBook.id;
+  r.addedSKU=newSKU;
+  r.addedRFID=newRFID;
+
+  refreshBadges();refreshDot();
+  toast('"'+newBook.title+'" added to catalogue \u2014 SKU: '+newSKU+' | RFID: '+newRFID,'success');
+  closeMo();pgStockReceive('delivered');
+}
+
+function openAddProposalForm(){
+  var sO=DB.suppliers.map(function(s){return '<option value="'+s.id+'">'+s.name+'</option>';}).join('');
+  var body='<div class="finfo"><i data-lucide="info"></i>Log a new book or genre proposal received from a supplier by phone or email.</div>'
+    +'<div class="fgrid">'
+    +'<div class="fg full"><label>Supplier *</label>'
+    +'<select id="pp-sup" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)"><option value="">Select supplier\u2026</option>'+sO+'</select></div>'
+    +'<div class="fg full"><label>Proposal Type *</label>'
+    +'<select id="pp-type" onchange="ppTypeChg()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.85rem;font-family:var(--fn)">'
+    +'<option value="">Select type\u2026</option>'
+    +'<option value="new_book">New Book Title</option>'
+    +'<option value="new_genre">New Genre / Category</option>'
+    +'</select></div>'
+    +'<div class="fg full"><label>Book Title / Genre Name *</label><input id="pp-title" placeholder="e.g. Introduction to Law"/></div>'
+    +'<div class="fg"><label>Category *</label><input id="pp-cat" placeholder="e.g. Law, Psychology\u2026"/></div>'
+    +'<div class="fg full" id="pp-detailwrap" style="display:none"><label>Why is this genre needed? *</label>'
+    +'<textarea id="pp-detail" rows="2" placeholder="e.g. High demand from local universities."></textarea></div>'
+    +'<div class="fg"><label>Proposed Qty</label><input id="pp-qty" type="number" min="1" placeholder="e.g. 10"/></div>'
+    +'<div class="fg"><label>Unit Price (RM)</label><input id="pp-price" type="number" min="0" step="0.01" placeholder="0.00"/></div>'
+    +'<div class="fg full"><label>Supplier Note</label><textarea id="pp-note" rows="2" placeholder="Any extra info from the supplier\u2026"></textarea></div>'
+    +'</div>';
+  var foot='<button class="btn bno" onclick="closeMo()">Cancel</button>'
+    +'<button class="btn bna" onclick="submitProposal()"><i data-lucide="inbox"></i>Log Proposal</button>';
+  openMo('Log Supplier Proposal',body,foot,true);
+}
+
+function ppTypeChg(){
+  var t=isel('pp-type').value;
+  var dw=isel('pp-detailwrap');
+  if(dw)dw.style.display=(t==='new_genre'?'flex':'none');
+}
+function ppCatChg(){
+  var v=isel('pp-cat')?isel('pp-cat').value:'';
+  var wrap=isel('pp-newcatwrap');
+  if(wrap)wrap.style.display=(v==='__new__'?'flex':'none');
+}
+
+function submitProposal(){
+  var sid=isel('pp-sup').value;
+  var type=isel('pp-type').value;
+  var title=isel('pp-title')?isel('pp-title').value.trim():'';
+  var author=isel('pp-author')?isel('pp-author').value.trim():'';
+  var isbn=isel('pp-isbn')?isel('pp-isbn').value.trim():'';
+  var catSel=isel('pp-cat')?isel('pp-cat').value:'';
+  var catNew=isel('pp-newcat')?isel('pp-newcat').value.trim():'';
+  var cat=catSel==='__new__'?catNew:catSel;
+  var detail=isel('pp-detail')?isel('pp-detail').value.trim():'';
+  var price=parseFloat(isel('pp-price')?isel('pp-price').value:0)||0;
+  var qty=parseInt(isel('pp-qty')?isel('pp-qty').value:0)||1;
+  var minStock=parseInt(isel('pp-min')?isel('pp-min').value:5)||5;
+  var note=isel('pp-note')?isel('pp-note').value.trim():'';
+  if(!sid||!type||!title||!author||!cat){toast('Please fill in Supplier, Type, Title, Author and Category.','error');return;}
+  if(price<=0){toast('Please enter a unit price.','error');return;}
+  if(type==='new_genre'&&!detail){toast('Please explain why this genre is needed.','error');return;}
+  var sup=DB.suppliers.find(function(x){return x.id===sid;});
+  var isNG=type==='new_genre'||catSel==='__new__';
+  DB.stockRequests.push({
+    id:uid('req'),supplierId:sid,supplierName:sup.name,
+    type:type,bookId:null,bookTitle:title,
+    category:cat,isNewGenre:isNG,newGenreDetails:detail,
+    qty:qty,unitPrice:price,note:note,
+    status:'pending',
+    submittedAt:new Date().toISOString(),
+    reviewedAt:null,reviewNote:'',
+    deliveredAt:null,deliveryNote:'',
+    pendingBookData:{title:title,author:author,isbn:isbn,cat:cat,price:price,minStock:minStock,supId:sid,qty:qty},
+    addedBookId:null,addedSKU:null,addedRFID:null
+  });
+  refreshBadges();refreshDot();
+  toast('Proposal from '+sup.name+' logged.','success');
+  closeMo();pgStockReceive('pending');
+}
+
+
+
+/* Legacy alias */
+function pgRequests(flt){pgStockOrder(flt||'pending');}
+
 
 /* ===== STAFF ===== */
 function pgStaff(s=''){
@@ -1559,7 +2039,7 @@ function saveStaff(id){
 
 /* ===== USERS ===== */
 function genEmployeeId(role){
-  const prefix=role==='Manager'?'MGR':'STF';
+  const prefix=role==='Admin'?'ADM':role==='Manager'?'MGR':'STF';
   const existing=DB.users.filter(u=>u.employeeId&&u.employeeId.includes('EMP-'+prefix));
   const nums=existing.map(u=>{const m=u.employeeId.match(/(\d+)$/);return m?parseInt(m[1]):0;});
   const next=(nums.length?Math.max(...nums):0)+1;
@@ -1588,7 +2068,8 @@ function pgUsers(s,rf){
   var rows=list.length?list.map(function(u){
     var eid=u.employeeId?'<span class="sku" style="font-size:.75rem;letter-spacing:.6px">'+u.employeeId+'</span>':'<span style="color:var(--tl)">—</span>';
     var badge=roleBadge[u.role]||'bgr';
-    var actions=u.role==='Admin'?'<span style="font-size:.7rem;color:var(--tl)">Protected</span>':'<button class="bic ed" onclick="editUserA(\''+u.id+'\')"><i data-lucide="pencil"></i></button> <button class="bic dl" onclick="delUser(\''+u.id+'\',\'admin\')"><i data-lucide="trash-2"></i></button>';
+    var isSelf=u.id===CU.id;
+    var actions=u.role==='Admin'&&isSelf?'<span style="font-size:.7rem;color:var(--tl)">Own Account</span>':'<button class="bic ed" onclick="editUserA(\''+u.id+'\')"><i data-lucide="pencil"></i></button> <button class="bic dl" onclick="delUser(\''+u.id+'\',\'admin\')"><i data-lucide="trash-2"></i></button>';
     return '<tr><td>'+eid+'</td><td style="font-weight:600">'+u.name+'</td><td style="font-family:monospace;font-size:.79rem">'+u.username+'</td><td><span class="badge '+badge+'">'+u.role+'</span></td><td style="font-size:.79rem">'+(u.email||'—')+'</td><td>'+actions+'</td></tr>';
   }).join(''):'<tr><td colspan="6"><div class="empty"><div class="eico"><i data-lucide="shield"></i></div><h3>No users found</h3></div></td></tr>';
   setHTML('<div class="ph"><div><h2>User Management</h2><p>Manage system accounts — filter by role below</p></div>'
@@ -1602,7 +2083,7 @@ function pgUsers(s,rf){
 
 function editUserA(id){
   const u=id?DB.users.find(x=>x.id===id):{name:'',username:'',role:'Staff',email:'',employeeId:''};
-  const autoId=id?'':(u.role==='Manager'?genEmployeeId('Manager'):genEmployeeId('Staff'));
+  const autoId=id?'':(u.role==='Admin'?genEmployeeId('Admin'):u.role==='Manager'?genEmployeeId('Manager'):genEmployeeId('Staff'));
   const eidInfo=id?'Employee ID is fixed and cannot be changed.':'A unique Employee ID will be auto-generated based on the selected role. You can also set a custom one.';
   const pwLabel=id?'Password (blank=keep)':'Password *';
   const eidRO=id?'readonly':'';
@@ -1617,7 +2098,8 @@ function editUserA(id){
     +'<div class="fg"><label>Username *</label><input id="uu" value="'+u.username+'"/></div>'
     +'<div class="fg"><label>'+pwLabel+'</label><input id="upw" type="password"/></div>'
     +'<div class="fg"><label>Role *</label>'
-    +'<select id="ur" onchange="uaRoleChg('+isEditStr+')">'
+    +'<select id="ur" onchange="uaRoleChg('+isEditStr+')">' 
+    +'<option value="Admin"'+(u.role==='Admin'?' selected':'')+'>Admin</option>'
     +'<option value="Manager"'+selMgr+'>Manager</option>'
     +'<option value="Staff"'+selStf+'>Staff</option>'
     +'</select></div>'
@@ -2136,742 +2618,76 @@ function printRpt(){
     +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:9pt;color:#000;padding:15mm 12mm;background:#fff}'
     +'@page{size:A4 landscape;margin:15mm 12mm}@media print{body{padding:0}}</style>'
     +'</head><body>'+printHTML+'</body></html>');
-  win.document.close();
-  win.focus();
-  setTimeout(function(){win.print();},500);
-}
-
-
 
 /* =====================================================
-   DEFECTIVE ITEMS PAGE
-   - Lists all defective items from customer returns or staff reports
-   - Manager can mark as disposed / send to supplier / write off
+   QR / BARCODE SCANNER — auto-injects into all .sbox
 ===================================================== */
-function pgDefective(tab='pending'){
-  const all=getDefectiveItems();
-  const pending=all.filter(d=>d.status==='pending');
-  const disposed=all.filter(d=>d.status==='disposed');
-  const sent=all.filter(d=>d.status==='sent_to_supplier');
-
-  const tabs=[
-    {id:'pending',lbl:'Pending Action',c:pending.length},
-    {id:'disposed',lbl:'Disposed / Written Off',c:disposed.length},
-    {id:'sent_to_supplier',lbl:'Sent to Supplier',c:sent.length},
-  ];
-  const tabH=tabs.map(t=>'<button class="btn bsm '+(tab===t.id?'bnn':'bno')+'" onclick="pgDefective(\''+t.id+'\')">'
-    +t.lbl+' <span class="badge bgr" style="margin-left:3px">'+t.c+'</span></button>').join('');
-
-  const shown=tab==='all'?all:all.filter(d=>d.status===tab);
-
-  const srcLabel={customer_return:'Customer Return',staff_report:'Staff Report',rfid_alert:'RFID Alert'};
-
-  const cards=shown.length?shown.map(function(d){
-    const bk=DB.books.find(function(b){return b.id===d.bookId;});
-    const stMap={pending:'by',disposed:'bgr',sent_to_supplier:'bb'};
-    const sup=bk?DB.suppliers.find(function(s){return s.id===bk.supplierId;}):null;
-    return '<div class="ret-card '+(d.status==='pending'?'pending':d.status==='disposed'?'':'')+'" style="border-left:4px solid '+(d.status==='pending'?'var(--dg)':d.status==='disposed'?'var(--tl)':'var(--ac)') + '">'
-      +'<div class="ret-hdr">'
-        +'<div>'
-          +'<div class="ret-title">'+d.bookTitle+'</div>'
-          +'<div class="ret-meta">'
-            +'<span class="sku">'+d.sku+'</span>'
-            +(d.rfid?' &nbsp;·&nbsp; <span class="rfidtag">'+d.rfid+'</span>':'')
-            +' &nbsp;·&nbsp; Reported by '+d.reportedBy+' on '+fmtDT(d.reportedAt)
-          +'</div>'
-        +'</div>'
-        +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:flex-start">'
-          +'<span class="badge bdk">'+(srcLabel[d.source]||d.source)+'</span>'
-          +(d.sourceRef?'<span class="txr" style="font-size:.72rem">'+d.sourceRef+'</span>':'')
-          +'<span class="badge '+(stMap[d.status]||'bgr')+'">'+d.status.replace(/_/g,' ')+'</span>'
-        +'</div>'
+(function(){
+  var _s=null,_cv=null,_cx=null,_rf=null,_inp=null;
+  function _ov(){
+    if(document.getElementById('qrOv'))return;
+    var d=document.createElement('div');d.id='qrOv';
+    d.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px';
+    d.innerHTML='<p style="color:#fff;font-size:.9rem;font-weight:600;margin:0">Point camera at QR code or barcode</p>'
+      +'<div style="position:relative;width:min(300px,86vw);height:min(300px,86vw)">'
+      +'<video id="qrV" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;border-radius:10px"></video>'
+      +'<div style="position:absolute;inset:18px;border:2px solid #3b82f6;border-radius:6px;pointer-events:none"></div>'
       +'</div>'
-      +'<div class="ret-grid">'
-        +'<div class="ret-field"><span>Qty</span><b style="color:var(--dg)">'+d.qty+'</b></div>'
-        +(bk?'<div class="ret-field"><span>Book Value</span>'+rmF(d.qty*bk.price)+'</div>':'')
-        +(bk?'<div class="ret-field"><span>Category</span><span class="badge bgr">'+bk.category+'</span></div>':'')
-        +(sup?'<div class="ret-field"><span>Supplier</span>'+sup.name+'</div>':'')
-      +'</div>'
-      +'<div style="font-size:.79rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r);margin-bottom:8px">'
-        +'<b>Defect reason:</b> '+d.reason
-      +'</div>'
-      +(d.disposalNote?'<div style="font-size:.76rem;color:var(--tl);margin-bottom:7px"><b>Disposal note:</b> '+d.disposalNote+'</div>':'')
-      +(d.disposedBy?'<div style="font-size:.73rem;color:var(--tl)">Handled by '+d.disposedBy+' on '+fmtDT(d.disposedAt)+'</div>':'')
-      +(d.status==='pending'?
-        '<div class="ret-actions">'
-          +'<button class="btn bnd bsm" data-did="'+d.id+'" data-dmt="writeoff" onclick="disposeDefective(this.dataset.did,this.dataset.dmt)"><i data-lucide="trash-2"></i>Write Off</button>'
-          +'<button class="btn bsm" style="background:var(--plt);color:var(--pu);border:1px solid rgba(124,58,237,.2)" data-did="'+d.id+'" data-dmt="supplier" onclick="disposeDefective(this.dataset.did,this.dataset.dmt)"><i data-lucide="send"></i>Send to Supplier</button>'
-          +(d.source==='customer_return'?'<button class="btn bno bsm" onclick="nav(\'returns-supplier\')"><i data-lucide="package-search"></i>Create Supplier Return</button>':'')
-        +'</div>':'')
-      +'</div>';
-  }).join('')
-  :'<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="shield-x"></i></div>'
-    +'<h3>No defective items in this category</h3>'
-    +'<p>Items flagged as defective from customer returns will appear here.</p></div></div>';
-
-  setHTML(
-    '<div class="sg" style="grid-template-columns:repeat(3,1fr)">'
-      +'<div class="sc"><div class="si red"><i data-lucide="shield-x"></i></div><div><div class="sv">'+all.length+'</div><div class="sl">Total Defective</div></div></div>'
-      +'<div class="sc"><div class="si warn"><i data-lucide="clock"></i></div><div><div class="sv">'+pending.length+'</div><div class="sl">Pending Action</div></div></div>'
-      +'<div class="sc"><div class="si slate"><i data-lucide="check-circle"></i></div><div><div class="sv">'+(disposed.length+sent.length)+'</div><div class="sl">Resolved</div></div></div>'
-    +'</div>'
-    +'<div class="ph">'
-      +'<div><h2>Defective Items</h2><p>Items that cannot be restocked due to defects or damage</p></div>'
-      +'<button class="btn bna" onclick="reportDefectManual()"><i data-lucide="plus"></i>Report Defective Item</button>'
-    +'</div>'
-    +'<div style="display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap">'+tabH+'</div>'
-    +cards
-  );
-}
-
-function disposeDefective(id,method){
-  openMo(method==='writeoff'?'Write Off Defective Item':'Send to Supplier',
-    '<div class="finfo"><i data-lucide="info"></i>'
-      +(method==='writeoff'?'This item will be marked as written off and removed from circulation.'
-        :'This item will be marked as sent back to the supplier for credit or replacement.')
-    +'</div>'
-    +'<div class="fg"><label>Note *</label>'
-      +'<textarea id="dsp-note" rows="2" placeholder="'
-        +(method==='writeoff'?'e.g. Item destroyed. Written off from records.':'e.g. Returned to supplier via courier. Awaiting credit note.')
-      +'"></textarea>'
-    +'</div>',
-    '<button class="btn bno" onclick="closeMo()">Cancel</button>'
-    +'<button class="btn '+(method==='writeoff'?'bnd':'bna')+'" data-did="'+id+'" data-dmt="'+method+'" onclick="doDispose(this.dataset.did,this.dataset.dmt)">'
-      +'<i data-lucide="'+(method==='writeoff'?'trash-2':'send')+'"></i>Confirm'
-    +'</button>'
-  );
-}
-
-function doDispose(id,method){
-  const note=isel('dsp-note')?.value.trim()||'';
-  if(!note){toast('Please provide a note.','error');return;}
-  const d=getDefectiveItems().find(function(x){return x.id===id;});
-  d.status=method==='writeoff'?'disposed':'sent_to_supplier';
-  d.disposalNote=note;d.disposedBy=CU.name;d.disposedAt=new Date().toISOString();
-  refreshBadges();
-  toast(method==='writeoff'?'Item written off.':'Item marked as sent to supplier.','success');
-  closeMo();pgDefective();
-}
-
-function reportDefectManual(){
-  openMo('Report Defective Item',
-    '<div class="fgrid">'
-      +'<div class="fg full"><label>Scan Book Code *</label>'
-        +'<input id="df-scan" type="text" placeholder="e.g. 1234567890" autocomplete="off" oninput="dfScanLookup()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)"/>'
-        +'<div style="font-size:.71rem;color:var(--tl);margin-top:3px">Scan the book\'s barcode, SKU or RFID tag — or type it manually.</div>'
-        +'<div id="df-book-info" style="margin-top:6px"></div>'
-      +'</div>'
-      +'<div class="fg"><label>Qty Defective *</label><input id="df-qty" type="number" min="1" value="1"/></div>'
-      +'<div class="fg"><label>Source</label>'
-        +'<select id="df-src" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">'
-          +'<option value="staff_report">Staff Inspection</option>'
-          +'<option value="rfid_alert">RFID Alert</option>'
-          +'<option value="customer_return">Customer Return</option>'
-        +'</select>'
-      +'</div>'
-      +'<div class="fg full"><label>Defect Description *</label>'
-        +'<textarea id="df-reason" rows="2" placeholder="Describe the defect…"></textarea>'
-      +'</div>'
-    +'</div>',
-    '<button class="btn bno" onclick="closeMo()">Cancel</button>'
-    +'<button class="btn bnd" onclick="saveDefectReport()"><i data-lucide="shield-x"></i>Flag as Defective</button>'
-  );
-}
-
-function dfScanLookup(){
-  const code=isel('df-scan').value;
-  const infoEl=isel('df-book-info');
-  if(!code.trim()){infoEl.innerHTML='';return;}
-  const b=findBookByCode(code);
-  if(b){
-    infoEl.innerHTML='<div class="finfo" style="margin-bottom:0"><i data-lucide="check-circle"></i>'+b.title+' — <span class="sku">'+b.sku+'</span> · '+b.category+' · Qty in stock: '+b.qty+'</div>';
-  } else {
-    infoEl.innerHTML='<div class="finfo" style="margin-bottom:0;background:var(--dlt);color:var(--dg)"><i data-lucide="alert-circle"></i>No book found for this code.</div>';
+      +'<button onclick="closeQR()" style="padding:8px 26px;border-radius:6px;border:none;background:#fff;font-size:.88rem;font-weight:700;cursor:pointer">✕ Cancel</button>';
+    document.body.appendChild(d);
   }
-  if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}
-}
-function saveDefectReport(){
-  const code=isel('df-scan')?.value||'';
-  const b=findBookByCode(code);
-  const qty=parseInt(isel('df-qty')?.value)||0;
-  const src=isel('df-src')?.value||'staff_report';
-  const reason=isel('df-reason')?.value.trim()||'';
-  if(!b){toast('Scan or enter a valid book code first.','error');return;}
-  if(qty<=0||!reason){toast('Please fill all required fields.','error');return;}
-  getDefectiveItems().push({
-    id:uid('df'),bookId:b.id,bookTitle:b.title,sku:b.sku,rfid:b.rfid,qty:qty,
-    reason:reason,source:src,sourceRef:'',
-    reportedBy:CU.name,reportedAt:new Date().toISOString(),
-    status:'pending',disposalNote:'',disposedBy:null,disposedAt:null
-  });
-  refreshBadges();
-  toast(b.title+' flagged as defective ('+qty+' unit[s]).','warn');
-  closeMo();pgDefective();
-}
-
-/* =====================================================
-   RETURNS SYSTEM — All page functions
-   1. pgReturns           — Manager: Customer Returns hub
-   2. openCustReturnForm  — Record a customer return
-   3. saveCustReturn      — Save customer return
-   4. approveCustReturn   — Approve + restock
-   5. rejectCustReturn    — Reject return
-   6. requestSupplierReturn — Send return request to supplier
-   7. pgReturnsSupplier   — Manager: Supplier Returns list
-   8. pgSupReturns        — Supplier: see return requests, respond
-   9. respondSupplierReturn — Supplier responds (received / declined)
-===================================================== */
-
-/* ── REASON LABELS ── */
-const RET_REASONS={
-  damaged:'Damaged',wrong_item:'Wrong Item',defective:'Defective / Printing Error',
-  change_of_mind:'Change of Mind',missing_pages:'Missing Pages',duplicate:'Duplicate Purchase',other:'Other'
-};
-const RET_CONDITION={good:'Good',damaged:'Damaged',defective:'Defective'};
-
-/* ── PAGE: RETURNS MANAGEMENT (Manager) ── */
-function pgReturns(tab='customer'){
-  const custRets=DB.customerReturns;
-  const supRets=DB.supplierReturns;
-  const pend=getPendCustReturns().length;
-  const supPend=supRets.filter(r=>r.status==='supplier-pending').length;
-
-  const tabs=[
-    {id:'customer',lbl:'Customer Returns',c:custRets.length,badge:pend},
-    {id:'to-supplier',lbl:'Supplier Returns',c:supRets.length,badge:supPend},
-    {id:'analytics',lbl:'Returns Analytics',c:null},
-  ];
-  const tabH=tabs.map(t=>`<button class="btn bsm ${tab===t.id?'bnn':'bno'}" onclick="pgReturns('${t.id}')">
-    ${t.lbl}${t.c!==null?` <span class="badge bgr" style="margin-left:3px">${t.c}</span>`:''}
-    ${t.badge>0?`<span class="badge br2" style="margin-left:3px">${t.badge} pending</span>`:''}
-  </button>`).join('');
-
-  let body='';
-
-  if(tab==='customer'){
-    const rows=custRets.slice().reverse().map(r=>{
-      const statusMap={pending:'by',approved:'bg2',rejected:'br2',restocked:'bb'};
-      const condMap={good:'bg2',damaged:'br2',defective:'by'};
-      const b=DB.books.find(x=>x.id===r.bookId);
-      const linked=DB.supplierReturns.find(s=>s.linkedCustReturnId===r.id);
-      return `<div class="ret-card ${r.status}">
-        <div class="ret-hdr">
-          <div>
-            <div class="ret-title"><span class="txr">${r.returnId}</span> &nbsp;—&nbsp; ${r.bookTitle}</div>
-            <div class="ret-meta">
-              <span class="cid">${r.custId}</span> ${r.custName} &nbsp;·&nbsp;
-              Linked to: <span class="txr">${r.txnRef}</span> &nbsp;·&nbsp;
-              ${fmtDT(r.receivedAt)}
-            </div>
-          </div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:flex-start">
-            <span class="ret-reason-badge"><i data-lucide="tag" style="font-size:.6rem"></i>${RET_REASONS[r.reason]||r.reason}</span>
-            <span class="badge ${condMap[r.condition]||'bgr'}">${RET_CONDITION[r.condition]||r.condition}</span>
-            <span class="badge ${statusMap[r.status]||'bgr'}">${r.status}</span>
-          </div>
-        </div>
-        <div class="ret-grid">
-          <div class="ret-field"><span>SKU</span><span class="sku">${b?.sku||r.sku}</span></div>
-          <div class="ret-field"><span>Qty Returned</span><b>${r.qty}</b></div>
-          <div class="ret-field"><span>Refund Type</span>${r.refundType==='full'?'Full Refund':'Partial Refund'}</div>
-          <div class="ret-field"><span>Refund Amount</span><b style="color:var(--ok)">${rmF(r.refundAmount)}</b></div>
-        </div>
-        <div style="font-size:.79rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r);margin-bottom:8px">
-          <b>Customer note:</b> ${r.reasonDetail||'—'}
-        </div>
-        ${r.managerNote?`<div style="font-size:.77rem;color:var(--tl);margin-bottom:8px"><b>Manager note:</b> ${r.managerNote}</div>`:''}
-        ${r.processedBy?`<div style="font-size:.73rem;color:var(--tl)">Processed by ${r.processedBy} on ${fmtDT(r.processedAt)}</div>`:''}
-        ${linked?`<div style="margin-top:8px;padding:7px 10px;background:var(--plt);border-radius:var(--r);font-size:.77rem;color:var(--pu)">
-          <i data-lucide="link" style="font-size:.75rem"></i>&nbsp;Supplier return <b>${linked.returnId}</b> created — Status: <b>${linked.status}</b>
-          ${linked.creditNote?` | Credit Note: <b>${linked.creditNote}</b> (${rmF(linked.creditAmount)})`:''}
-        </div>`:''}
-        ${r.status==='pending'?`
-        <div class="ret-actions">
-          <button class="btn bns bsm" onclick="approveCustReturn('${r.id}')"><i data-lucide="check-circle"></i>Approve & Restock</button>
-          <button class="btn bnd bsm" onclick="rejectCustReturn('${r.id}')"><i data-lucide="x-circle"></i>Reject Return</button>
-        </div>`:
-        (r.status==='approved'||r.status==='restocked')&&!linked&&r.condition!=='good'?`
-        <div class="ret-actions">
-          <button class="btn bsm" style="background:var(--plt);color:var(--pu);border:1px solid rgba(124,58,237,.2)" onclick="requestSupplierReturn('${r.id}')">
-            <i data-lucide="package-search"></i>Request Supplier Return
-          </button>
-        </div>`:``}
-      </div>`;
-    });
-    body=`
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-        <button class="btn bna" onclick="openCustReturnForm()"><i data-lucide="plus"></i>Record Customer Return</button>
-      </div>
-      ${rows.length?rows.join(''):
-        `<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="package-open"></i></div>
-         <h3>No customer returns yet</h3><p>Record a return when a customer brings back an item.</p></div></div>`}`;
-  }
-
-  else if(tab==='to-supplier'){
-    const rows=supRets.slice().reverse().map(r=>{
-      const sm={'supplier-pending':'by','supplier-received':'bg2','supplier-declined':'br2'};
-      const linked=DB.customerReturns.find(c=>c.id===r.linkedCustReturnId);
-      return`<div class="ret-card ${r.status}">
-        <div class="ret-hdr">
-          <div>
-            <div class="ret-title"><span class="txr">${r.returnId}</span> &nbsp;—&nbsp; ${r.bookTitle}</div>
-            <div class="ret-meta">${r.supplierName} &nbsp;·&nbsp; ${fmtDT(r.requestedAt)} &nbsp;·&nbsp; Requested by ${r.requestedBy}</div>
-          </div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap">
-            <span class="badge bdk">${r.reason.replace(/_/g,' ')}</span>
-            <span class="badge ${sm[r.status]||'bgr'}">${r.status.replace('supplier-','')}</span>
-          </div>
-        </div>
-        <div class="ret-grid">
-          <div class="ret-field"><span>SKU</span><span class="sku">${r.sku}</span></div>
-          <div class="ret-field"><span>Qty</span><b>${r.qty}</b></div>
-          <div class="ret-field"><span>Unit Price</span>${rmF(r.unitPrice)}</div>
-          <div class="ret-field"><span>Est. Credit</span><b style="color:var(--ok)">${rmF(r.qty*r.unitPrice)}</b></div>
-        </div>
-        <div style="font-size:.79rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r);margin-bottom:8px">${r.detail}</div>
-        ${linked?`<div style="font-size:.75rem;color:var(--tl);margin-bottom:7px">
-          Linked customer return: <span class="txr">${linked.returnId}</span> (${linked.custName})</div>`:''}
-        ${r.supplierNote?`<div style="padding:7px 10px;background:${r.status==='supplier-received'?'var(--olt)':'var(--dlt)'};border-radius:var(--r);font-size:.78rem;color:${r.status==='supplier-received'?'var(--ok)':'var(--dg)'}">
-          <b>Supplier response:</b> ${r.supplierNote}
-          ${r.creditNote?` | Credit Note: <b>${r.creditNote}</b> — ${rmF(r.creditAmount)}`:''}
-        </div>`:''}
-        ${r.status==='supplier-pending'?`<div style="font-size:.74rem;color:var(--tl);margin-top:7px">Awaiting supplier response…</div>`:''}
-        ${r.supplierRespondedAt?`<div style="font-size:.73rem;color:var(--tl);margin-top:6px">Responded: ${fmtDT(r.supplierRespondedAt)}</div>`:''}
-      </div>`;
-    });
-    body=`
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-        <button class="btn bna" onclick="openDirectSupplierReturn()"><i data-lucide="plus"></i>Direct Supplier Return</button>
-      </div>
-      ${rows.length?rows.join(''):
-        `<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="truck"></i></div>
-         <h3>No supplier return requests</h3><p>Send a return to supplier from an approved customer return or directly.</p></div></div>`}`;
-  }
-
-  else if(tab==='analytics'){
-    const totalCust=DB.customerReturns.length;
-    const totalPendingCust=getPendCustReturns().length;
-    const totalRefunded=DB.customerReturns.filter(r=>r.status!=='rejected').reduce((a,r)=>a+r.refundAmount,0);
-    const restocked=DB.customerReturns.filter(r=>r.addedBack).length;
-    const supSent=DB.supplierReturns.length;
-    const supCredit=DB.supplierReturns.filter(r=>r.creditAmount>0).reduce((a,r)=>a+r.creditAmount,0);
-    const byReason={};
-    DB.customerReturns.forEach(r=>{if(!byReason[r.reason])byReason[r.reason]=0;byReason[r.reason]++;});
-    const maxR=Math.max(...Object.values(byReason),1);
-    const reasonBars=Object.entries(byReason).map(([k,v])=>`
-      <div class="brr">
-        <div class="brl">${RET_REASONS[k]||k}</div>
-        <div class="brt"><div class="brf wr" style="width:${Math.round(v/maxR*100)}%"><span class="brv">${v>1?v:''}</span></div></div>
-        <div class="brn">${v}</div>
-      </div>`).join('');
-    const byCondition={};
-    DB.customerReturns.forEach(r=>{if(!byCondition[r.condition])byCondition[r.condition]=0;byCondition[r.condition]++;});
-    body=`
-      <div class="sg" style="grid-template-columns:repeat(3,1fr)">
-        <div class="sc"><div class="si warn"><i data-lucide="undo-2"></i></div><div><div class="sv">${totalCust}</div><div class="sl">Customer Returns</div></div></div>
-        <div class="sc"><div class="si red"><i data-lucide="dollar-sign"></i></div><div><div class="sv" style="font-size:1rem">${rmF(totalRefunded)}</div><div class="sl">Total Refunded</div></div></div>
-        <div class="sc"><div class="si green"><i data-lucide="package"></i></div><div><div class="sv">${restocked}</div><div class="sl">Restocked</div></div></div>
-        <div class="sc"><div class="si purple"><i data-lucide="truck"></i></div><div><div class="sv">${supSent}</div><div class="sl">Sent to Supplier</div></div></div>
-        <div class="sc"><div class="si green"><i data-lucide="receipt"></i></div><div><div class="sv" style="font-size:1rem">${rmF(supCredit)}</div><div class="sl">Supplier Credits</div></div></div>
-        <div class="sc"><div class="si ${totalPendingCust>0?'warn':'slate'}"><i data-lucide="clock"></i></div><div><div class="sv">${totalPendingCust}</div><div class="sl">Awaiting Action</div></div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="card"><div class="ch"><h2>Returns by Reason</h2></div><div class="cb">${reasonBars||'<p style="color:var(--tl)">No data</p>'}</div></div>
-        <div class="card"><div class="ch"><h2>Returns by Condition</h2></div><div class="cb">
-          ${Object.entries(byCondition).map(([k,v])=>`
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)">
-              <span class="badge ${k==='good'?'bg2':k==='damaged'?'br2':'by'}">${RET_CONDITION[k]||k}</span>
-              <div style="flex:1;margin:0 12px;background:var(--bgm);border-radius:4px;height:8px;overflow:hidden">
-                <div style="width:${Math.round(v/totalCust*100)}%;background:var(--ac);height:100%;border-radius:4px"></div>
-              </div>
-              <b>${v}</b>
-            </div>`).join('')}
-        </div></div>
-      </div>`;
-  }
-
-  setHTML(`
-    <div class="ph"><div><h2>Returns Management</h2><p>Customer returns, supplier returns &amp; refund tracking</p></div></div>
-    <div style="display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap">${tabH}</div>
-    ${body}`);
-}
-
-/* ── Record Customer Return Form ── */
-function openCustReturnForm(){
-  const td=new Date().toISOString().split('T')[0];
-  openMo('Record Customer Return',`
-    <div class="finfo"><i data-lucide="info"></i>Scan the receipt or the book's code to load the original purchase. Inventory will be updated based on the item condition.</div>
-    <div class="fgrid">
-      <div class="fg full"><label>Scan Receipt / Book Code *</label>
-        <input id="cr-scan" type="text" placeholder="e.g. 1234567890" autocomplete="off" oninput="crScanLookup()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)"/>
-        <div style="font-size:.71rem;color:var(--tl);margin-top:3px">Scan the receipt's transaction code, or the book's barcode, SKU or RFID tag — or type it manually.</div>
-      </div>
-      <div id="cr-txn-info" style="grid-column:1/-1;display:none;background:var(--bg);border-radius:var(--r);padding:10px 12px;font-size:.79rem"></div>
-      <div class="fg"><label>Return Reason *</label>
-        <select id="cr-reason" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          <option value="">Select reason…</option>
-          ${Object.entries(RET_REASONS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
-        </select></div>
-      <div class="fg"><label>Item Condition *</label>
-        <select id="cr-cond" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          <option value="good">Good — Can restock</option>
-          <option value="damaged">Damaged — Cannot restock</option>
-          <option value="defective">Defective — Manufacturer issue</option>
-        </select></div>
-      <div class="fg"><label>Qty Returned *</label><input id="cr-qty" type="number" min="1" value="1" placeholder="1"/></div>
-      <div class="fg"><label>Refund Type</label>
-        <select id="cr-reftype" onchange="crCalcRefund()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          <option value="full">Full Refund</option>
-          <option value="partial">Partial Refund</option>
-          <option value="exchange">Exchange Only</option>
-          <option value="none">No Refund</option>
-        </select></div>
-      <div class="fg"><label>Refund Amount (RM)</label><input id="cr-refamt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
-      <div class="fg full"><label>Customer's Description *</label>
-        <textarea id="cr-detail" rows="2" placeholder="What did the customer say about the issue?"></textarea></div>
-      <div class="fg"><label>Date Received *</label><input id="cr-date" type="date" value="${td}"/></div>
-      <div class="fg"><label>Manager Note</label><input id="cr-note" placeholder="Internal note…"/></div>
-    </div>`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn bnn" onclick="saveCustReturn()"><i data-lucide="save"></i>Record Return</button>`, true);
-}
-
-function crScanLookup(){
-  const code=isel('cr-scan').value;
-  const infoEl=isel('cr-txn-info');
-  if(!code.trim()){infoEl.style.display='none';return;}
-  const t=findTxnByCode(code);
-  if(!t){
-    infoEl.style.display='block';
-    infoEl.innerHTML='<div class="finfo" style="margin-bottom:0;background:var(--dlt);color:var(--dg)"><i data-lucide="alert-circle"></i>No matching purchase found for this code.</div>';
-    if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}
-    return;
-  }
-  const b=DB.books.find(x=>x.id===t.bookId);
-  infoEl.style.display='block';
-  infoEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-    <div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Transaction</span><span class="txr">${t.ref}</span></div>
-    <div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Customer</span><b>${t.custName}</b></div>
-    <div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Book</span>${t.bookTitle} <span class="sku">${b?.sku||'—'}</span></div>
-    <div><span style="font-size:.66rem;color:var(--tl);display:block;text-transform:uppercase">Qty / Price</span>${t.qty} × ${rmF(t.unitPrice)}</div>
-  </div>`;
-  isel('cr-qty').max=t.qty;
-  isel('cr-refamt').value=t.unitPrice.toFixed(2);
-  if(window.lucide&&lucide.createIcons)try{if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){};}catch(e){}
-}
-
-function crCalcRefund(){
-  const t=findTxnByCode(isel('cr-scan')?.value);
-  const type=isel('cr-reftype')?.value;
-  const qty=parseFloat(isel('cr-qty')?.value)||1;
-  if(!t)return;
-  const full=t.unitPrice*qty;
-  const amtEl=isel('cr-refamt');
-  if(type==='full') amtEl.value=full.toFixed(2);
-  else if(type==='partial') amtEl.value=(full*0.5).toFixed(2);
-  else amtEl.value='0.00';
-}
-
-function saveCustReturn(){
-  const t=findTxnByCode(isel('cr-scan')?.value);
-  const reason=isel('cr-reason').value;
-  const cond=isel('cr-cond').value;
-  const qty=parseInt(isel('cr-qty').value)||0;
-  const refType=isel('cr-reftype').value;
-  const refAmt=parseFloat(isel('cr-refamt').value)||0;
-  const detail=isel('cr-detail').value.trim();
-  const date=isel('cr-date').value;
-  const note=isel('cr-note').value.trim();
-  if(!t){toast('Scan or enter a valid receipt/book code first.','error');return;}
-  if(!reason||qty<=0||!detail){toast('Please fill all required fields.','error');return;}
-  const b=DB.books.find(x=>x.id===t.bookId);
-  const retId='RET-CUST-'+String(DB.customerReturns.length+1).padStart(3,'0');
-  const newRet={
-    id:uid('cr'),returnId:retId,txnRef:t.ref,
-    custId:t.custId,custName:t.custName,
-    bookId:t.bookId,bookTitle:t.bookTitle,sku:b?.sku||'',
-    qty,unitPrice:t.unitPrice,
-    reason,reasonDetail:detail,condition:cond,
-    refundType:refType,refundAmount:refAmt,
-    staffId:CU.id,staffName:CU.name,
-    receivedAt:new Date(date+'T'+new Date().toTimeString().slice(0,8)).toISOString(),
-    status:'pending',managerNote:note,
-    processedBy:null,processedAt:null,addedBack:false,
+  window.openQR=function(inp){
+    _inp=inp||null;_ov();
+    var ov=document.getElementById('qrOv'),v=document.getElementById('qrV');
+    if(!navigator.mediaDevices){toast('Camera not supported','error');return;}
+    if(!window.jsQR){toast('QR library not loaded','error');return;}
+    _cv=document.createElement('canvas');_cx=_cv.getContext('2d');
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+      .then(function(stream){
+        _s=stream;v.srcObject=stream;ov.style.display='flex';
+        v.onloadedmetadata=function(){_cv.width=v.videoWidth||640;_cv.height=v.videoHeight||480;_tick(v);};
+      }).catch(function(e){toast('Camera denied: '+e.message,'error');});
   };
-  DB.customerReturns.push(newRet);
-  DB.notifications.push({id:uid('n'),title:'New customer return recorded',sub:`${retId}: ${t.bookTitle} — ${t.custName}`,time:new Date().toISOString(),read:false,targetRole:'Manager',link:'returns'});
-  refreshDot();refreshBadges();
-  toast(`Customer return ${retId} recorded.`,'success');closeMo();pgReturns('customer');
-}
-
-/* ── Approve: restock if good condition ── */
-function approveCustReturn(id){
-  openMo('Approve Return',`
-    <div class="finfo"><i data-lucide="package"></i>If condition is Good, item will be restocked (+1 to inventory). Damaged/defective items will NOT be restocked.</div>
-    <div class="fg"><label>Manager Note</label><textarea id="apr-note" rows="2" placeholder="e.g. Item verified. Approved for full refund."></textarea></div>`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn bns" onclick="doApproveCustReturn('${id}')"><i data-lucide="check-circle"></i>Approve</button>`);
-}
-function doApproveCustReturn(id){
-  const r=DB.customerReturns.find(x=>x.id===id);
-  const note=isel('apr-note')?.value.trim()||'';
-  r.managerNote=note;r.processedBy=CU.name;r.processedAt=new Date().toISOString();
-  if(r.condition==='good'){
-    /* Good condition — restock inventory */
-    r.status='restocked';r.addedBack=true;
-    const b=DB.books.find(x=>x.id===r.bookId);if(b)b.qty+=r.qty;
-    toast('Return approved. '+r.qty+' unit(s) of "'+r.bookTitle+'" restocked into inventory.','success');
-  } else if(r.condition==='defective'){
-    /* Defective — move to defective items list, do NOT restock */
-    r.status='approved';r.addedBack=false;
-    const bk=DB.books.find(x=>x.id===r.bookId);
-    getDefectiveItems().push({
-      id:uid('df'),bookId:r.bookId,bookTitle:r.bookTitle,
-      sku:bk?bk.sku:r.sku,rfid:bk?bk.rfid:'',qty:r.qty,
-      reason:r.reasonDetail||r.reason,
-      source:'customer_return',sourceRef:r.returnId,
-      reportedBy:CU.name,reportedAt:new Date().toISOString(),
-      status:'pending',disposalNote:'',disposedBy:null,disposedAt:null
+  function _tick(v){
+    if(!_s)return;
+    if(v.readyState===v.HAVE_ENOUGH_DATA){
+      _cx.drawImage(v,0,0,_cv.width,_cv.height);
+      var d=_cx.getImageData(0,0,_cv.width,_cv.height);
+      var q=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+      if(q&&q.data){
+        var val=q.data.trim();closeQR();
+        if(_inp){_inp.value=val;_inp.dispatchEvent(new Event('input',{bubbles:true}));_inp.focus();}
+        toast('Scanned: '+val,'success');return;
+      }
+    }
+    _rf=requestAnimationFrame(function(){_tick(v);});
+  }
+  window.closeQR=function(){
+    if(_s){_s.getTracks().forEach(function(t){t.stop();});_s=null;}
+    if(_rf){cancelAnimationFrame(_rf);_rf=null;}
+    var ov=document.getElementById('qrOv');if(ov)ov.style.display='none';
+    var v=document.getElementById('qrV');if(v)v.srcObject=null;
+  };
+  function _btn(inp){
+    var b=document.createElement('button');b.type='button';b.className='qr-scan-btn';
+    b.title='Scan QR / Barcode';
+    b.style.cssText='flex-shrink:0;width:30px;height:30px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--wh);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tl);padding:0';
+    b.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/></svg>';
+    b.onclick=function(){openQR(inp);};
+    return b;
+  }
+  function _inject(){
+    document.querySelectorAll('.sbox').forEach(function(box){
+      if(box.querySelector('.qr-scan-btn'))return;
+      var inp=box.querySelector('input');if(!inp)return;
+      box.style.display='flex';box.style.alignItems='center';box.style.gap='5px';
+      inp.style.flex='1';inp.style.minWidth='0';
+      box.appendChild(_btn(inp));
     });
-    refreshBadges();
-    toast('Return approved. Item flagged as defective — added to Defective Items list.','warn');
-  } else {
-    /* Damaged — approved but do not restock */
-    r.status='approved';r.addedBack=false;
-    toast('Return approved. Damaged item not restocked.','info');
   }
-  DB.notifications.push({id:uid('n'),title:'Return approved',sub:r.returnId+' — '+r.bookTitle,time:new Date().toISOString(),read:false,targetRole:'Staff',link:'returns'});
-  refreshDot();closeMo();pgReturns('customer');
-}
-
-/* ── Reject return ── */
-function rejectCustReturn(id){
-  openMo('Reject Return',`
-    <p style="margin-bottom:12px;font-size:.83rem;color:var(--tm)">Provide a reason for rejection. Item will not be restocked and no refund will be issued.</p>
-    <div class="fg"><label>Rejection Reason *</label><textarea id="rej-note" rows="2" placeholder="e.g. Return window expired. Item shows signs of misuse."></textarea></div>`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn bnd" onclick="doRejectCustReturn('${id}')"><i data-lucide="x-circle"></i>Reject</button>`);
-}
-function doRejectCustReturn(id){
-  const note=isel('rej-note')?.value.trim()||'';
-  if(!note){toast('Rejection reason required.','error');return;}
-  const r=DB.customerReturns.find(x=>x.id===id);
-  r.status='rejected';r.managerNote=note;r.processedBy=CU.name;r.processedAt=new Date().toISOString();
-  toast('Return rejected.','info');closeMo();pgReturns('customer');
-}
-
-/* ── Request Supplier Return from customer return ── */
-function requestSupplierReturn(custReturnId){
-  const cr=DB.customerReturns.find(x=>x.id===custReturnId);
-  const b=DB.books.find(x=>x.id===cr.bookId);
-  const supOpts=DB.suppliers.map(s=>`<option value="${s.id}"${b?.supplierId===s.id?' selected':''}>${s.name}</option>`).join('');
-  const reasonSuggestion=cr.condition==='defective'?'printing_defect':'customer_return_damaged';
-  openMo('Request Supplier Return',`
-    <div class="finfo"><i data-lucide="info"></i>This will send a return request to the supplier. They will be notified to issue a credit note or replacement.</div>
-    <div style="padding:9px 12px;background:var(--alt);border-radius:var(--r);margin-bottom:12px;font-size:.8rem">
-      <b>${cr.bookTitle}</b> &nbsp;<span class="sku">${b?.sku||cr.sku}</span><br>
-      <span style="color:var(--tl)">Customer return: ${cr.returnId} — Reason: ${RET_REASONS[cr.reason]||cr.reason}</span>
-    </div>
-    <div class="fgrid">
-      <div class="fg full"><label>Supplier *</label>
-        <select id="sr-sup" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          ${supOpts}</select></div>
-      <div class="fg"><label>Return Reason</label>
-        <select id="sr-reason" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          <option value="customer_return_damaged"${reasonSuggestion==='customer_return_damaged'?' selected':''}>Customer Return — Damaged</option>
-          <option value="printing_defect"${reasonSuggestion==='printing_defect'?' selected':''}>Printing / Manufacturing Defect</option>
-          <option value="wrong_supply">Wrong Item Supplied</option>
-          <option value="excess_stock">Excess Stock</option>
-          <option value="other">Other</option>
-        </select></div>
-      <div class="fg"><label>Qty to Return</label><input id="sr-qty" type="number" min="1" value="${cr.qty}"/></div>
-      <div class="fg full"><label>Detail for Supplier *</label>
-        <textarea id="sr-detail" rows="2" placeholder="Explain the reason and condition…">${cr.reasonDetail}</textarea></div>
-    </div>`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn bna" onclick="doRequestSupplierReturn('${custReturnId}')"><i data-lucide="send"></i>Send to Supplier</button>`, true);
-}
-
-function doRequestSupplierReturn(custReturnId){
-  const supId=isel('sr-sup').value;
-  const reason=isel('sr-reason').value;
-  const qty=parseInt(isel('sr-qty').value)||0;
-  const detail=isel('sr-detail').value.trim();
-  if(!supId||qty<=0||!detail){toast('Please fill all fields.','error');return;}
-  const cr=DB.customerReturns.find(x=>x.id===custReturnId);
-  const b=DB.books.find(x=>x.id===cr.bookId);
-  const sup=DB.suppliers.find(x=>x.id===supId);
-  const retId='RET-SUP-'+String(DB.supplierReturns.length+1).padStart(3,'0');
-  DB.supplierReturns.push({
-    id:uid('sr'),returnId:retId,supplierId:supId,supplierName:sup.name,
-    bookId:cr.bookId,bookTitle:cr.bookTitle,sku:b?.sku||cr.sku,qty,unitPrice:cr.unitPrice,
-    reason,detail,linkedCustReturnId:custReturnId,
-    status:'supplier-pending',requestedBy:CU.name,requestedAt:new Date().toISOString(),
-    supplierNote:'',supplierRespondedAt:null,creditNote:'',creditAmount:0,
-  });
-  DB.notifications.push({id:uid('n'),title:'New return request from store',sub:`${retId}: ${cr.bookTitle} — ${qty} unit(s) to be returned`,time:new Date().toISOString(),read:false,targetRole:'Supplier',link:'sup-returns'});
-  refreshDot();refreshBadges();
-  toast(`Supplier return request ${retId} sent to ${sup.name}.`,'success');closeMo();pgReturns('to-supplier');
-}
-
-/* ── Direct Supplier Return (not linked to customer return) ── */
-function openDirectSupplierReturn(){
-  const sOpts=DB.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  openMo('Direct Supplier Return',`
-    <div class="finfo"><i data-lucide="info"></i>Return items to a supplier without a linked customer return. E.g. excess stock or unsold damaged items.</div>
-    <div class="fgrid">
-      <div class="fg full"><label>Scan Book Code *</label>
-        <input id="dsr-scan" type="text" placeholder="e.g. 1234567890" autocomplete="off" oninput="dsrScanLookup()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)"/>
-        <div style="font-size:.71rem;color:var(--tl);margin-top:3px">Scan the book's barcode, SKU or RFID tag — or type it manually.</div>
-        <div id="dsr-book-info" style="margin-top:6px"></div>
-      </div>
-      <div class="fg full"><label>Supplier *</label>
-        <select id="dsr-sup" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          <option value="">Select supplier…</option>${sOpts}</select></div>
-      <div class="fg"><label>Reason</label>
-        <select id="dsr-reason" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)">
-          <option value="excess_stock">Excess Stock</option>
-          <option value="printing_defect">Printing Defect</option>
-          <option value="unsold_damaged">Unsold — Damaged</option>
-          <option value="other">Other</option>
-        </select></div>
-      <div class="fg"><label>Qty to Return *</label><input id="dsr-qty" type="number" min="1" placeholder="e.g. 5"/></div>
-      <div class="fg full"><label>Detail *</label><textarea id="dsr-detail" rows="2" placeholder="Explain the reason for this return…"></textarea></div>
-    </div>`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn bna" onclick="saveDirectSupRet()"><i data-lucide="send"></i>Send to Supplier</button>`, true);
-}
-
-function dsrScanLookup(){
-  const code=isel('dsr-scan').value;
-  const infoEl=isel('dsr-book-info');
-  if(!code.trim()){infoEl.innerHTML='';return;}
-  const b=findBookByCode(code);
-  if(b){
-    infoEl.innerHTML=`<div class="finfo" style="margin-bottom:0"><i data-lucide="check-circle"></i>${b.title} — <span class="sku">${b.sku}</span> · In stock: ${b.qty}</div>`;
-    const supSel=isel('dsr-sup');
-    if(b.supplierId) supSel.value=b.supplierId;
-  } else {
-    infoEl.innerHTML='<div class="finfo" style="margin-bottom:0;background:var(--dlt);color:var(--dg)"><i data-lucide="alert-circle"></i>No book found for this code.</div>';
-  }
-  if(window.lucide&&lucide.createIcons)try{lucide.createIcons();}catch(e){}
-}
-
-function saveDirectSupRet(){
-  const code=isel('dsr-scan')?.value||'';
-  const b=findBookByCode(code);
-  const supId=isel('dsr-sup').value;
-  const reason=isel('dsr-reason').value,qty=parseInt(isel('dsr-qty').value)||0;
-  const detail=isel('dsr-detail').value.trim();
-  if(!b){toast('Scan or enter a valid book code first.','error');return;}
-  if(!supId||qty<=0||!detail){toast('Please fill all fields.','error');return;}
-  const sup=DB.suppliers.find(x=>x.id===supId);
-  if(qty>b.qty){toast(`Only ${b.qty} units in stock.`,'error');return;}
-  const retId='RET-SUP-'+String(DB.supplierReturns.length+1).padStart(3,'0');
-  DB.supplierReturns.push({
-    id:uid('sr'),returnId:retId,supplierId:supId,supplierName:sup.name,
-    bookId:b.id,bookTitle:b.title,sku:b.sku,qty,unitPrice:b.price,
-    reason,detail,linkedCustReturnId:null,
-    status:'supplier-pending',requestedBy:CU.name,requestedAt:new Date().toISOString(),
-    supplierNote:'',supplierRespondedAt:null,creditNote:'',creditAmount:0,
-  });
-  b.qty=Math.max(0,b.qty-qty);
-  DB.notifications.push({id:uid('n'),title:'Return request from store',sub:`${retId}: ${b.title} — ${qty} unit(s) to be returned`,time:new Date().toISOString(),read:false,targetRole:'Supplier',link:'sup-returns'});
-  refreshDot();refreshBadges();
-  toast(`Supplier return ${retId} sent. Inventory updated.`,'success');closeMo();pgReturns('to-supplier');
-}
-
-/* ── PAGE: Supplier Returns (Manager view) ── */
-function pgReturnsSupplier(){
-  pgReturns('to-supplier');
-}
-
-/* ── PAGE: Supplier — view return requests ── */
-function pgSupReturns(){
-  const sup=getMySup();if(!sup){setHTML('<div class="card cb"><p style="color:var(--tl)">Supplier profile not found.</p></div>');return;}
-  const myReturns=DB.supplierReturns.filter(r=>r.supplierId===sup.id);
-  const pending=myReturns.filter(r=>r.status==='supplier-pending');
-  const received=myReturns.filter(r=>r.status==='supplier-received');
-  const declined=myReturns.filter(r=>r.status==='supplier-declined');
-  const sm={'supplier-pending':'by','supplier-received':'bg2','supplier-declined':'br2'};
-  const rows=myReturns.slice().sort((a,b)=>b.requestedAt.localeCompare(a.requestedAt)).map(r=>`
-    <div class="sup-ret-card ${r.status}">
-      <div class="ret-hdr">
-        <div>
-          <div class="ret-title"><span class="txr">${r.returnId}</span> &nbsp;—&nbsp; ${r.bookTitle}</div>
-          <div class="ret-meta">Requested by ${r.requestedBy} &nbsp;·&nbsp; ${fmtDT(r.requestedAt)}</div>
-        </div>
-        <span class="badge ${sm[r.status]||'bgr'}">${r.status.replace('supplier-','')}</span>
-      </div>
-      <div class="ret-grid">
-        <div class="ret-field"><span>SKU</span><span class="sku">${r.sku}</span></div>
-        <div class="ret-field"><span>Qty to Return</span><b>${r.qty}</b></div>
-        <div class="ret-field"><span>Unit Value</span>${rmF(r.unitPrice)}</div>
-        <div class="ret-field"><span>Total Value</span><b>${rmF(r.qty*r.unitPrice)}</b></div>
-      </div>
-      <div style="font-size:.79rem;color:var(--tm);padding:7px;background:var(--bg);border-radius:var(--r);margin-bottom:8px">
-        <b>Reason:</b> ${r.reason.replace(/_/g,' ')} &nbsp;·&nbsp; ${r.detail}
-      </div>
-      ${r.supplierNote?`<div style="padding:7px 10px;border-radius:var(--r);background:${r.status==='supplier-received'?'var(--olt)':'var(--dlt)'};font-size:.78rem;color:${r.status==='supplier-received'?'var(--ok)':'var(--dg)'}">
-        <b>Your response:</b> ${r.supplierNote}
-        ${r.creditNote?` | Credit Note: <b>${r.creditNote}</b> — ${rmF(r.creditAmount)}`:''}
-      </div>`:''}
-      ${r.status==='supplier-pending'?`
-      <div class="ret-actions">
-        <button class="btn bns bsm" onclick="respondSupplierReturn('${r.id}','received')"><i data-lucide="check-circle"></i>Confirm Receipt &amp; Issue Credit</button>
-        <button class="btn bnd bsm" onclick="respondSupplierReturn('${r.id}','declined')"><i data-lucide="x-circle"></i>Decline Return</button>
-      </div>`:r.supplierRespondedAt?`<div style="font-size:.73rem;color:var(--tl);margin-top:6px">Responded: ${fmtDT(r.supplierRespondedAt)}</div>`:''}
-    </div>`);
-  setHTML(`
-    <div class="sg" style="grid-template-columns:repeat(4,1fr)">
-      <div class="sc"><div class="si blue"><i data-lucide="package-open"></i></div><div><div class="sv">${myReturns.length}</div><div class="sl">Total Returns</div></div></div>
-      <div class="sc"><div class="si warn"><i data-lucide="clock"></i></div><div><div class="sv">${pending.length}</div><div class="sl">Pending Action</div></div></div>
-      <div class="sc"><div class="si green"><i data-lucide="check-circle"></i></div><div><div class="sv">${received.length}</div><div class="sl">Received &amp; Credited</div></div></div>
-      <div class="sc"><div class="si red"><i data-lucide="x-circle"></i></div><div><div class="sv">${declined.length}</div><div class="sl">Declined</div></div></div>
-    </div>
-    <div class="ph"><div><h2>Return Requests from Store</h2><p>Review and respond to items the store wants to return
-    <div class="ph"><div><h2>Return Requests from Store</h2><p>Review and respond to items the store wants to return</p></div></div>
-    ${rows.length?rows.join(''):
-      `<div class="card cb"><div class="empty"><div class="eico"><i data-lucide="package-open"></i></div><h3>No return requests</h3><p>The store has not sent any return requests yet.</p></div></div>`}`);
-}
-
-/* ── Supplier responds to return request ── */
-function respondSupplierReturn(id,decision){
-  const label=decision==='received'?'Confirm Receipt':'Decline Return';
-  openMo(label,`
-    ${decision==='received'?`
-    <div class="fgrid">
-      <div class="fg full"><label>Response Note *</label><textarea id="srr-note" rows="2" placeholder="e.g. Items received in good condition. Credit note will follow."></textarea></div>
-      <div class="fg"><label>Credit Note Number</label><input id="srr-cn" placeholder="CN-XXXX-XXX"/></div>
-      <div class="fg"><label>Credit Amount (RM)</label><input id="srr-ca" type="number" min="0" step="0.01" placeholder="0.00"/></div>
-    </div>`:
-    `<div class="fg"><label>Decline Reason *</label><textarea id="srr-note" rows="2" placeholder="e.g. Return window has closed. Item condition not verifiable."></textarea></div>`}`,
-    `<button class="btn bno" onclick="closeMo()">Cancel</button>
-     <button class="btn ${decision==='received'?'bns':'bnd'}" onclick="doRespondSupRet('${id}','${decision}')">
-       <i data-lucide="${decision==='received'?'check-circle':'x-circle'}"></i>${label}
-     </button>`);
-}
-
-function doRespondSupRet(id,decision){
-  const note=isel('srr-note')?.value.trim()||'';
-  if(!note){toast('Please provide a response note.','error');return;}
-  const r=DB.supplierReturns.find(x=>x.id===id);
-  r.status=`supplier-${decision}`;
-  r.supplierNote=note;
-  r.supplierRespondedAt=new Date().toISOString();
-  if(decision==='received'){
-    const cn=isel('srr-cn')?.value.trim()||'';
-    const ca=parseFloat(isel('srr-ca')?.value)||0;
-    r.creditNote=cn;r.creditAmount=ca;
-    DB.notifications.push({id:uid('n'),title:`Supplier confirmed return: ${r.returnId}`,sub:`${r.supplierName} received ${r.bookTitle}.${cn?' Credit note: '+cn:''}`,time:new Date().toISOString(),read:false,targetRole:'Manager',link:'returns'});
-    toast('Return confirmed. Credit note issued.','success');
-  } else {
-    DB.notifications.push({id:uid('n'),title:`Supplier declined return: ${r.returnId}`,sub:`${r.supplierName} declined return of ${r.bookTitle}.`,time:new Date().toISOString(),read:false,targetRole:'Manager',link:'returns'});
-    toast('Return declined.','warn');
-  }
-  refreshDot();refreshBadges();closeMo();pgSupReturns();
-}
+  var _o=window.setHTML;
+  if(_o)window.setHTML=function(h){_o(h);setTimeout(_inject,80);};
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(_inject,400);});
+})();
 
 </script>
-</body>
-</html>
