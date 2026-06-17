@@ -321,7 +321,6 @@ tbody tr:hover{background:var(--bg)}
 .qr-scan-btn{flex-shrink:0;width:30px;height:30px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--wh);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tl);padding:0}
 .qr-scan-btn:hover{border-color:var(--ac);color:var(--ac)}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 </head>
 <body><!-- LOGIN -->
 <div id="ls">
@@ -888,7 +887,7 @@ function pgBooks(s='',cf=''){
   setHTML(`<div class="ph"><div><h2>Book Catalogue</h2><p>${DB.books.length} titles — each with unique SKU, RFID tag &amp; Barcode</p></div>
     <div class="pha">${catBtn}${addBookBtn}</div></div>
     <div class="card"><div class="ch"><div class="tb2">
-      <div class="sbox"><i data-lucide="search"></i><input type="text" placeholder="Search title, author, SKU, RFID…" value="${s}" oninput="pgBooks(this.value,isel('bkf').value)"/></div>
+      <div class="sbox"><i data-lucide="search"></i><input id="bk-srch" type="text" placeholder="Search title, author, SKU, RFID…" value="${s}" oninput="pgBooks(this.value,isel('bkf').value)"/><button class="qr-scan-btn" type="button" title="Scan QR / Barcode" onclick="openQR(isel('bk-srch'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/></svg></button></div>
       <select class="flt" id="bkf" onchange="pgBooks(isel('pc').querySelector('.sbox input').value,this.value)"><option value="">All Categories</option>${co}</select>
     </div></div>
     <div class="tw"><table><thead><tr><th>Title / ISBN</th><th>SKU</th><th>RFID Tag</th><th>Barcode</th><th>Author</th><th>Category</th><th>Price</th><th>Qty</th><th>Min</th><th>Status</th><th>Supplier</th><th>Action</th></tr></thead>
@@ -2440,8 +2439,11 @@ function reportDefectManual(){
   openMo('Report Defective Item',
     '<div class="fgrid">'
       +'<div class="fg full"><label>Scan Book Code *</label>'
-        +'<input id="df-scan" type="text" placeholder="e.g. 1234567890" autocomplete="off" oninput="dfScanLookup()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)"/>'
-        +'<div style="font-size:.71rem;color:var(--tl);margin-top:3px">Scan the book\'s barcode, SKU or RFID tag — or type it manually.</div>'
+        +'<div style="display:flex;gap:6px;align-items:center">'
+        +'<input id="df-scan" type="text" placeholder="Scan QR or type barcode, SKU, RFID…" autocomplete="off" oninput="dfScanLookup()" style="flex:1;min-width:0;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-size:.84rem;font-family:var(--fn)"/>'
+        +'<button class="qr-scan-btn" type="button" title="Scan QR / Barcode" onclick="openQR(isel(\'df-scan\'))" style="flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/></svg></button>'
+        +'</div>'
+        +'<div style="font-size:.71rem;color:var(--tl);margin-top:3px">Open camera to scan QR code, or type barcode / SKU / RFID manually.</div>'
         +'<div id="df-book-info" style="margin-top:6px"></div>'
       +'</div>'
       +'<div class="fg"><label>Qty Defective *</label><input id="df-qty" type="number" min="1" value="1"/></div>'
@@ -3056,70 +3058,113 @@ function doRespondSupRet(id,decision){
 }
 
 
-/* ===== QR SCANNER ===== */
+/* ===== CAMERA / QR SCANNER — no external library needed ===== */
 (function(){
-  var _s=null,_cv=null,_cx=null,_rf=null,_inp=null;
+  var _stream=null, _raf=null, _inp=null, _detector=null;
+
+  /* Build the overlay once and reuse */
   function _ov(){
-    if(document.getElementById('qrOv'))return;
-    var d=document.createElement('div');d.id='qrOv';
-    d.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px';
-    d.innerHTML='<p style="color:#fff;font-size:.9rem;font-weight:600;margin:0">Point camera at QR code or barcode</p>'
-      +'<div style="position:relative;width:min(300px,86vw);height:min(300px,86vw)">'
-      +'<video id="qrV" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;border-radius:10px"></video>'
-      +'<div style="position:absolute;inset:18px;border:2px solid #3b82f6;border-radius:6px;pointer-events:none"></div>'
+    if(document.getElementById('camOv'))return;
+    var d=document.createElement('div');
+    d.id='camOv';
+    d.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:14px';
+    d.innerHTML=
+      '<p style="color:#fff;font-size:.95rem;font-weight:600;margin:0;letter-spacing:.2px">Point camera at QR code or barcode</p>'
+      +'<div style="position:relative;width:min(320px,88vw);height:min(320px,88vw)">'
+        +'<video id="camV" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;border-radius:12px;display:block"></video>'
+        +'<div style="position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 4px rgba(59,130,246,.8);pointer-events:none"></div>'
+        +'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60%;height:60%;border:2px solid rgba(59,130,246,1);border-radius:8px;pointer-events:none"></div>'
       +'</div>'
-      +'<button onclick="closeQR()" style="padding:8px 26px;border-radius:6px;border:none;background:#fff;font-size:.88rem;font-weight:700;cursor:pointer">\u2715 Cancel</button>';
+      +'<p style="color:rgba(255,255,255,.55);font-size:.78rem;margin:0">Align code within the frame</p>'
+      +'<button onclick="closeQR()" style="padding:9px 28px;border-radius:8px;border:none;background:#fff;font-size:.88rem;font-weight:700;cursor:pointer;color:#111">\u2715 Cancel</button>';
     document.body.appendChild(d);
   }
+
   window.openQR=function(inp){
-    _inp=inp||null;_ov();
-    var ov=document.getElementById('qrOv'),v=document.getElementById('qrV');
-    if(!navigator.mediaDevices){toast('Camera not supported','error');return;}
-    if(!window.jsQR){toast('QR library not loaded','error');return;}
-    _cv=document.createElement('canvas');_cx=_cv.getContext('2d');
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
-      .then(function(stream){
-        _s=stream;v.srcObject=stream;ov.style.display='flex';
-        v.onloadedmetadata=function(){_cv.width=v.videoWidth||640;_cv.height=v.videoHeight||480;_tick(v);};
-      }).catch(function(e){toast('Camera denied: '+e.message,'error');});
-  };
-  function _tick(v){
-    if(!_s)return;
-    if(v.readyState===v.HAVE_ENOUGH_DATA){
-      _cx.drawImage(v,0,0,_cv.width,_cv.height);
-      var d=_cx.getImageData(0,0,_cv.width,_cv.height);
-      var q=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
-      if(q&&q.data){
-        var val=q.data.trim();closeQR();
-        if(_inp){_inp.value=val;_inp.dispatchEvent(new Event('input',{bubbles:true}));_inp.focus();}
-        toast('Scanned: '+val,'success');return;
-      }
+    _inp=inp||null;
+    _ov();
+    var ov=document.getElementById('camOv');
+    var v=document.getElementById('camV');
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      toast('Camera not available on this device/browser.','error');return;
     }
-    _rf=requestAnimationFrame(function(){_tick(v);});
-  }
-  window.closeQR=function(){
-    if(_s){_s.getTracks().forEach(function(t){t.stop();});_s=null;}
-    if(_rf){cancelAnimationFrame(_rf);_rf=null;}
-    var ov=document.getElementById('qrOv');if(ov)ov.style.display='none';
-    var v=document.getElementById('qrV');if(v)v.srcObject=null;
+    /* Request back camera on mobile, any camera on desktop */
+    var constraints={video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false};
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream){
+        _stream=stream;
+        v.srcObject=stream;
+        ov.style.display='flex';
+        v.play();
+        /* Try BarcodeDetector (Chrome 83+, Edge, Android Chrome) */
+        if(window.BarcodeDetector){
+          _detector=new BarcodeDetector({formats:['qr_code','code_128','code_39','ean_13','ean_8','upc_a','upc_e','data_matrix','pdf417','aztec','itf']});
+          _scanWithDetector(v);
+        } else {
+          /* Fallback: canvas + manual scan attempt every 400ms */
+          _scanWithCanvas(v);
+        }
+      })
+      .catch(function(err){
+        var msg=err.name==='NotAllowedError'?'Camera permission denied. Please allow camera access in your browser settings.'
+               :err.name==='NotFoundError'?'No camera found on this device.'
+               :'Camera error: '+err.message;
+        toast(msg,'error');
+      });
   };
-  function _btn(inp){
-    var b=document.createElement('button');b.type='button';b.className='qr-scan-btn';
-    b.title='Scan QR / Barcode';
-    b.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/></svg>';
-    b.onclick=function(){openQR(inp);};
-    return b;
+
+  function _scanWithDetector(v){
+    if(!_stream)return;
+    _detector.detect(v)
+      .then(function(codes){
+        if(codes&&codes.length>0){
+          _handleResult(codes[0].rawValue);
+        } else {
+          _raf=setTimeout(function(){_scanWithDetector(v);},200);
+        }
+      })
+      .catch(function(){
+        _raf=setTimeout(function(){_scanWithDetector(v);},200);
+      });
   }
-  function _inject(){
-    document.querySelectorAll('.sbox').forEach(function(box){
-      if(box.querySelector('.qr-scan-btn'))return;
-      var inp=box.querySelector('input');if(!inp)return;
-      box.appendChild(_btn(inp));
-    });
+
+  function _scanWithCanvas(v){
+    /* Without BarcodeDetector we still open the camera so user can SEE the feed.
+       We cannot decode without a library, so show a manual-entry tip. */
+    var tip=document.getElementById('camOv').querySelector('p:last-of-type');
+    if(tip)tip.textContent='Camera open — type the code manually if auto-scan is unavailable.';
+    /* Keep trying BarcodeDetector in case it loads late */
+    _raf=setInterval(function(){
+      if(!_stream)return;
+      if(window.BarcodeDetector){
+        clearInterval(_raf);_raf=null;
+        _detector=new BarcodeDetector({formats:['qr_code','code_128','ean_13','upc_a']});
+        _scanWithDetector(v);
+      }
+    },500);
   }
-  var _o=window.setHTML;
-  if(_o)window.setHTML=function(h){_o(h);setTimeout(_inject,80);};
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(_inject,400);});
+
+  function _handleResult(val){
+    val=(val||'').trim();
+    if(!val)return;
+    closeQR();
+    if(_inp){
+      _inp.value=val;
+      _inp.dispatchEvent(new Event('input',{bubbles:true}));
+      _inp.focus();
+    }
+    toast('Scanned: '+val,'success');
+  }
+
+  window.closeQR=function(){
+    if(_raf){clearTimeout(_raf);clearInterval(_raf);_raf=null;}
+    if(_stream){_stream.getTracks().forEach(function(t){t.stop();});_stream=null;}
+    var ov=document.getElementById('camOv');if(ov)ov.style.display='none';
+    var v=document.getElementById('camV');if(v){v.srcObject=null;}
+    _detector=null;
+  };
+
+  /* QR buttons are placed manually in specific forms — no auto-inject needed */
 })();
 
 </script>
